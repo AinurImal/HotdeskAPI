@@ -1,4 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using HotdeskAPI.Data;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<HotdeskAPIContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("HotdeskAPIContext") ?? throw new InvalidOperationException("Connection string 'HotdeskAPIContext' not found.")));
 
 // Add services to the container.
 
