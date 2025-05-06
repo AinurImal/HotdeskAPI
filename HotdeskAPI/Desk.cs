@@ -10,7 +10,6 @@ namespace Hotdesk.Components.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)] // Desk ID manually entered
         public int DeskId { get; set; }
-
         public string Name { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public bool HasMonitor { get; set; }
