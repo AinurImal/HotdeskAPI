@@ -47,56 +47,154 @@ namespace HotdeskAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutDesk(int id, Desk desk)
         {
-            if (id != desk.DeskId)
+            // Step 1: Validate the input
+            if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest(ModelState); // Return validation errors
             }
 
-            _context.Entry(desk).State = EntityState.Modified;
+            // Step 2: Check if the ID in the route matches the DeskId in the body
+            if (id != desk.DeskId)
+            {
+                return BadRequest("The Desk ID in the URL does not match the Desk ID in the request body.");
+            }
 
+            // Step 3: Check if the DeskId is within the valid range
+            if (desk.DeskId < 1 || desk.DeskId > 9999)
+            {
+                // Generate a list of available unique Desk IDs within the valid range
+                var existingIds = _context.Desk.Select(d => d.DeskId).ToHashSet();
+                var availableIds = Enumerable.Range(1, 9999).Except(existingIds).Take(5).ToList();
+
+                return BadRequest(new
+                {
+                    Message = "The Desk ID must be within the range of 1 to 9999. Please provide a valid Desk ID.",
+                    AvailableIds = availableIds
+                });
+            }
+
+            // Step 4: Check if the DeskId already exists (excluding the current desk being updated)
+            if (_context.Desk.Any(d => d.DeskId == desk.DeskId && d.DeskId != id))
+            {
+                // Generate a list of available unique Desk IDs
+                var existingIds = _context.Desk.Select(d => d.DeskId).ToHashSet();
+                var availableIds = Enumerable.Range(1, 9999).Except(existingIds).Take(5).ToList();
+
+                return Conflict(new
+                {
+                    Message = "The Desk ID already exists. Please provide a unique Desk ID.",
+                    AvailableIds = availableIds
+                });
+            }
+
+            // Step 5: Begin a transaction
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // Update the desk in the database
+                _context.Entry(desk).State = EntityState.Modified;
+
+                // Save changes
                 await _context.SaveChangesAsync();
+
+                // Commit the transaction
+                await transaction.CommitAsync();
+
+                // Return success response
+                return NoContent();
             }
             catch (DbUpdateConcurrencyException)
             {
+                // Rollback the transaction in case of a concurrency issue
+                await transaction.RollbackAsync();
+
                 if (!DeskExists(id))
                 {
-                    return NotFound();
+                    return NotFound("The desk does not exist.");
                 }
                 else
                 {
                     throw;
                 }
             }
+            catch (Exception ex)
+            {
+                // Rollback the transaction in case of any other error
+                await transaction.RollbackAsync();
 
-            return NoContent();
+                // Log the exception (optional) and return an error response
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
+
 
         // POST: api/Desks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Desk>> PostDesk(Desk desk)
         {
-            _context.Desk.Add(desk);
-            try
+            // Step 1: Validate the input
+            if (!ModelState.IsValid)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (DeskExists(desk.DeskId))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
+                return BadRequest(ModelState); // Return validation errors
             }
 
-            return CreatedAtAction("GetDesk", new { id = desk.DeskId }, desk);
+            // Step 2: Check if the DeskId is within the valid range
+            if (desk.DeskId < 1 || desk.DeskId > 9999)
+            {
+                // Generate a list of available unique Desk IDs within the valid range
+                var existingIds = _context.Desk.Select(d => d.DeskId).ToHashSet();
+                var availableIds = Enumerable.Range(1, 9999).Except(existingIds).Take(5).ToList();
+
+                return BadRequest(new
+                {
+                    Message = "The Desk ID must be within the range of 1 to 9999. Please provide a valid Desk ID.",
+                    AvailableIds = availableIds
+                });
+            }
+
+            // Step 3: Check if the DeskId already exists
+            if (DeskExists(desk.DeskId))
+            {
+                // Generate a list of available unique Desk IDs
+                var existingIds = _context.Desk.Select(d => d.DeskId).ToHashSet();
+                var availableIds = Enumerable.Range(1, 9999).Except(existingIds).Take(5).ToList();
+
+                return Conflict(new
+                {
+                    Message = "The Desk ID already exists. Please provide a unique Desk ID.",
+                    AvailableIds = availableIds
+                });
+            }
+
+            // Step 4: Begin a transaction
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Add the desk to the database
+                _context.Desk.Add(desk);
+
+                // Save changes
+                await _context.SaveChangesAsync();
+
+                // Commit the transaction
+                await transaction.CommitAsync();
+
+                // Return the created desk
+                return CreatedAtAction("GetDesk", new { id = desk.DeskId }, desk);
+            }
+            catch (Exception ex)
+            {
+                // Rollback the transaction in case of an error
+                await transaction.RollbackAsync();
+
+                // Log the exception (optional) and rethrow or return an error response
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
+
+
+
 
         // DELETE: api/Desks/5
         [HttpDelete("{id}")]
