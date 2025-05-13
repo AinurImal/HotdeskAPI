@@ -46,7 +46,7 @@ namespace HotdeskAPI.Migrations
 
                     b.HasKey("DeskId");
 
-                    b.ToTable("Desk");
+                    b.ToTable("Desk", (string)null);
                 });
 
             modelBuilder.Entity("Hotdesk.Models.Booking", b =>
@@ -87,7 +87,7 @@ namespace HotdeskAPI.Migrations
 
                     b.HasIndex("DeskId");
 
-                    b.ToTable("Booking");
+                    b.ToTable("Booking", (string)null);
                 });
 
             modelBuilder.Entity("Hotdesk.Models.Booking", b =>
