@@ -78,11 +78,39 @@ namespace HotdeskAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Booking>> PostBooking(Booking booking)
         {
-            _context.Booking.Add(booking);
-            await _context.SaveChangesAsync();
+            // Step 1: Validate UserId
+            if (string.IsNullOrWhiteSpace(booking.UserId))
+            {
+                return BadRequest(new { Message = "UserId is required and cannot be empty." });
+            }
+            if (!int.TryParse(booking.UserId, out int userIdNumber) || userIdNumber < 1001 || userIdNumber > 9999)
+            {
+                return BadRequest(new { Message = "UserId must be a number between 1001 and 9999." });
+            }
 
-            return CreatedAtAction("GetBooking", new { id = booking.BookingId }, booking);
+            // Step 2: Validate UserName
+            if (string.IsNullOrWhiteSpace(booking.UserName))
+            {
+                return BadRequest(new { Message = "UserName is required and cannot be empty." });
+            }
+
+            // Step 3: Begin transaction and save if no error
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _context.Booking.Add(booking);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return CreatedAtAction("GetBooking", new { id = booking.BookingId }, booking);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
+
 
         // DELETE: api/Bookings/5
         [HttpDelete("{id}")]
