@@ -16,15 +16,14 @@ namespace Hotdesk.Models
 
         public string UserId { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
-
         public DateTime BookingDate { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+
+        public TimeOnly StartTime { get; set; } // Changed to TimeOnly
+        public TimeOnly EndTime { get; set; }   // Changed to TimeOnly
 
         public bool CheckedIn { get; set; }
         public DateTime? CheckInTime { get; set; }
 
-        // Optional: include desk reference but exclude from JSON to prevent circular references
         [JsonIgnore]
         public virtual Desk? Desk { get; set; }
     }
