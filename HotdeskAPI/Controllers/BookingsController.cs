@@ -42,6 +42,8 @@ namespace HotdeskAPI.Controllers
             return booking;
         }
 
+
+
         // PUT: api/Bookings/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -75,6 +77,7 @@ namespace HotdeskAPI.Controllers
 
         // POST: api/Bookings
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/Bookings
         [HttpPost]
         public async Task<ActionResult<Booking>> PostBooking(Booking booking)
         {
@@ -94,10 +97,32 @@ namespace HotdeskAPI.Controllers
                 return BadRequest(new { Message = "UserName is required and cannot be empty." });
             }
 
-            // Step 3: Begin transaction and save if no error
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // Step 3: Validate Desk availability for the given date and time
+                var overlappingBooking = await _context.Booking
+                    .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
+                    .Where(b => booking.StartTime < b.EndTime && booking.EndTime > b.StartTime)
+                    .FirstOrDefaultAsync();
+
+                if (overlappingBooking != null)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new { Message = "The desk is already booked for the selected date and time." });
+                }
+
+                // Step 4: Set Desk availability to false
+                var desk = await _context.Desk.FindAsync(booking.DeskId);
+                if (desk == null)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new { Message = "Desk not found." });
+                }
+                desk.IsAvailable = false;
+                _context.Entry(desk).State = EntityState.Modified;
+
+                // Step 5: Save booking and commit
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -110,6 +135,7 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
+
 
 
         // DELETE: api/Bookings/5

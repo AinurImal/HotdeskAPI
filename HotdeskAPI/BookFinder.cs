@@ -14,6 +14,10 @@ namespace Hotdesk.Components.Models
         public DateTime EndTime { get; set; } // End time of the booking
         public bool CheckedIn { get; set; } // Whether the user has checked in
         public DateTime? CheckInTime { get; set; } // Time of check-in, if applicable
+
+        public bool IsAvailable { get; set; } // Use to check desk availability
+
     }
 }
+
 
