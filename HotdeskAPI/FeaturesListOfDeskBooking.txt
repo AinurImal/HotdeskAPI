@@ -1,0 +1,11 @@
+﻿List of Features: Desk Booking
+
+1.	Desk Booking: 
+	a.	Use for user in the office setup
+	b.	User can book for weekly and daily
+	c.	CheckBooking for availability of the desk
+		i.	Date and Time checking – update in progress, will be using weekly and daily book only
+2.	Desk Listing:
+	a.	Use for the admin to list the desk that will be setup in the office
+3.	Sign in:
+	a.	To differentiate between user and administrator
