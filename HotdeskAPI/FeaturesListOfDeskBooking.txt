@@ -7,7 +7,7 @@
 		ii.	Daily booking - 1 day only
 	c.	CheckDesk for availability of the desk
 		i.	Date and Time checking – update in progress, will be using weekly and daily book only
-	d.	BookFinder - update on progress
+	d.	BookFinder - update in progress
 		i.	Search for available desk
 		ii.	Search for available desk by date and time
 		iii.	Search for available desk by location
