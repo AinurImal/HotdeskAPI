@@ -24,7 +24,8 @@ namespace HotdeskAPI.Migrations
                     StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
-                    CheckInTime = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    CheckInTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsAvailable = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -57,6 +58,7 @@ namespace HotdeskAPI.Migrations
                     UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DurationType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
                     EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
