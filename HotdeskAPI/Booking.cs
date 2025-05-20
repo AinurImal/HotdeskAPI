@@ -24,7 +24,9 @@ namespace Hotdesk.Models
         public string UserId { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public DateTime BookingDate { get; set; }
-        public BookingDurationType DurationType { get; set; } // Add this property to set time selection type
+        
+        public string DurationType { get; set; } = string.Empty; // In Booking.cs, change the property to string and set default value to empty
+
 
         public TimeOnly StartTime { get; set; } // Changed to TimeOnly
         public TimeOnly EndTime { get; set; }   // Changed to TimeOnly
