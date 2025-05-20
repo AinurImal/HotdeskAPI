@@ -2,9 +2,15 @@
 
 1.	Desk Booking: 
 	a.	Use for user in the office setup
-	b.	User can book for weekly and daily
-	c.	CheckBooking for availability of the desk
+	b.	User can book for weekly and daily -Updated on 20 May 2025
+		i.	Weekly booking - 5 days a week, Monday to Friday
+		ii.	Daily booking - 1 day only
+	c.	CheckDesk for availability of the desk
 		i.	Date and Time checking – update in progress, will be using weekly and daily book only
+	d.	BookFinder - update on progress
+		i.	Search for available desk
+		ii.	Search for available desk by date and time
+		iii.	Search for available desk by location
 2.	Desk Listing:
 	a.	Use for the admin to list the desk that will be setup in the office
 3.	Sign in:

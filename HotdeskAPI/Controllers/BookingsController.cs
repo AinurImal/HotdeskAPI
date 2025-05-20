@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Hotdesk.Models;
 using HotdeskAPI.Data;
+using Hotdesk.Components.Models;
 
 namespace HotdeskAPI.Controllers
 {
@@ -79,7 +80,7 @@ namespace HotdeskAPI.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         // POST: api/Bookings
         [HttpPost]
-        public async Task<ActionResult<Booking>> PostBooking(Booking booking)
+        public async Task<ActionResult<object>> PostBooking(Booking booking)
         {
             // Step 1: Validate UserId
             if (string.IsNullOrWhiteSpace(booking.UserId))
@@ -97,39 +98,19 @@ namespace HotdeskAPI.Controllers
                 return BadRequest(new { Message = "UserName is required and cannot be empty." });
             }
 
+            // Step 3: Validate DurationType and set StartTime/EndTime
+            var durationType = booking.DurationType?.Trim().ToLower();
+            if (durationType != "daily" && durationType != "weekly")
+            {
+                return BadRequest(new { Message = "DurationType must be either 'Daily' or 'Weekly' (case-insensitive)." });
+            }
+
+            booking.StartTime = new TimeOnly(8, 0);
+            booking.EndTime = new TimeOnly(18, 0);
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Step 3: Validate and assign StartTime/EndTime based on DurationType
-                var durationType = booking.DurationType?.Trim().ToLower();
-                if (string.IsNullOrWhiteSpace(durationType))
-                {
-                    await transaction.RollbackAsync();
-                    return BadRequest(new { Message = "DurationType is required. Please use one of: Daily, Weekly, Custom." });
-                }
-
-                switch (durationType)
-                {
-                    case "daily":
-                        booking.StartTime = new TimeOnly(8, 0);
-                        booking.EndTime = new TimeOnly(18, 0);
-                        break;
-                    case "weekly":
-                        booking.StartTime = new TimeOnly(8, 0);
-                        booking.EndTime = new TimeOnly(18, 0);
-                        break;
-                    case "custom":
-                        if (booking.EndTime <= booking.StartTime)
-                        {
-                            await transaction.RollbackAsync();
-                            return BadRequest(new { Message = "For custom duration, EndTime must be after StartTime." });
-                        }
-                        break;
-                    default:
-                        await transaction.RollbackAsync();
-                        return BadRequest(new { Message = "Invalid DurationType. Please use one of: Daily, Weekly, Custom." });
-                }
-
                 // Step 4: Validate Desk availability for the given date and time
                 var overlappingBooking = await _context.Booking
                     .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
@@ -152,12 +133,42 @@ namespace HotdeskAPI.Controllers
                 desk.IsAvailable = false;
                 _context.Entry(desk).State = EntityState.Modified;
 
-                // Step 6: Save booking and commit
+                // Step 6: Save booking
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
+
+                // Step 7: Add to BookFinder
+                var bookFinder = new BookFinder
+                {
+                    BookingId = booking.BookingId,
+                    DeskId = booking.DeskId,
+                    UserId = booking.UserId,
+                    UserName = booking.UserName,
+                    BookingDate = booking.BookingDate,
+                    StartTime = DateTime.Today.Add(booking.StartTime.ToTimeSpan()),
+                    EndTime = DateTime.Today.Add(booking.EndTime.ToTimeSpan()),
+                    CheckedIn = booking.CheckedIn,
+                    CheckInTime = booking.CheckInTime,
+                    IsAvailable = false
+                };
+                _context.BookFinder.Add(bookFinder);
+                await _context.SaveChangesAsync();
+
                 await transaction.CommitAsync();
 
-                return CreatedAtAction("GetBooking", new { id = booking.BookingId }, booking);
+                // Step 8: Return booking info with start/end time message
+                return Ok(new
+                {
+                    Message = $"Booking created. Book started at {booking.StartTime:hh\\:mm} and ended at {booking.EndTime:hh\\:mm} for this working {(durationType == "daily" ? "day" : "week")}.",
+                    booking.BookingId,
+                    booking.DeskId,
+                    booking.UserId,
+                    booking.UserName,
+                    booking.BookingDate,
+                    booking.DurationType,
+                    booking.StartTime,
+                    booking.EndTime
+                });
             }
             catch (Exception ex)
             {
@@ -165,6 +176,7 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
+
 
 
 
