@@ -97,10 +97,36 @@ namespace HotdeskAPI.Controllers
                 return BadRequest(new { Message = "UserName is required and cannot be empty." });
             }
 
+            // Step 3: Assign StartTime and EndTime based on DurationType
+            switch (booking.DurationType)
+            {
+                case BookingDurationType.WholeDay:
+                    booking.StartTime = new TimeOnly(8, 0);
+                    booking.EndTime = new TimeOnly(18, 00);
+                    break;
+                case BookingDurationType.WholeWeek:
+                    // For whole week, you may want to set BookingDate to the start of the week,
+                    // and store the week as a range, or handle this in your business logic.
+                    // Here, we set StartTime and EndTime to cover the whole day for each day in the week.
+                    booking.StartTime = new TimeOnly(8, 0);
+                    booking.EndTime = new TimeOnly(18, 00);
+                    // Optionally, you may want to add a WeekStartDate and WeekEndDate property for clarity.
+                    break;
+                case BookingDurationType.Custom:
+                    // Validate custom times
+                    if (booking.EndTime <= booking.StartTime)
+                    {
+                        return BadRequest(new { Message = "EndTime must be after StartTime for custom duration." });
+                    }
+                    break;
+                default:
+                    return BadRequest(new { Message = "Invalid DurationType." });
+            }
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Step 3: Validate Desk availability for the given date and time
+                // Step 4: Validate Desk availability for the given date and time
                 var overlappingBooking = await _context.Booking
                     .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
                     .Where(b => booking.StartTime < b.EndTime && booking.EndTime > b.StartTime)
@@ -112,7 +138,7 @@ namespace HotdeskAPI.Controllers
                     return BadRequest(new { Message = "The desk is already booked for the selected date and time." });
                 }
 
-                // Step 4: Set Desk availability to false
+                // Step 5: Set Desk availability to false
                 var desk = await _context.Desk.FindAsync(booking.DeskId);
                 if (desk == null)
                 {
@@ -122,7 +148,7 @@ namespace HotdeskAPI.Controllers
                 desk.IsAvailable = false;
                 _context.Entry(desk).State = EntityState.Modified;
 
-                // Step 5: Save booking and commit
+                // Step 6: Save booking and commit
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -135,6 +161,7 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
+
 
 
 
