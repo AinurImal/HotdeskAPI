@@ -2,10 +2,19 @@
 
 1.	Desk Booking: 
 	a.	Use for user in the office setup
-	b.	User can book for weekly and daily -Updated on 20 May 2025
+	b.	User can book for weekly and daily 
 		i.	Weekly booking - 5 days a week, Monday to Friday - no weekly at this moment
-		ii.	Daily booking - 1 day only - focus on daily features
-		iii.	Unique desk ID + User ID + date
+		ii.	Daily booking - 1 day only - focus on daily features - 
+			1.	Book a desk for a day - Updated on 21/05/2025
+			2.	Book a desk for a specific time - not implemented yet
+			3.	Book a desk for a specific location - Need to be updated (must be unique ID)
+			4.	Book a desk for a specific user - Need to be updated (must be unique ID)
+			5.	Book a desk for a specific date - Need to be updated 
+		iii.	Unique desk ID + User ID + date - in progress 			
+			1.	Desk ID - unique ID for each desk
+			2.	User ID - unique ID for each user
+			3.	Date - date of booking
+			4.	Time - time of booking 
 	c.	CheckDesk for availability of the desk
 		i.	Date and Time checking – update in progress, will be using weekly and daily book only
 	d.	BookFinder - update in progress
