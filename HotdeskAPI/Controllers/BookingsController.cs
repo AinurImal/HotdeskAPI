@@ -98,29 +98,25 @@ namespace HotdeskAPI.Controllers
                 return BadRequest(new { Message = "UserName is required and cannot be empty." });
             }
 
-            // Step 3: Validate DurationType and set StartTime/EndTime
+            // Step 3: Only allow "Daily" as DurationType
             var durationType = booking.DurationType?.Trim().ToLower();
-            if (durationType != "daily" && durationType != "weekly")
+            if (durationType != "daily")
             {
-                return BadRequest(new { Message = "DurationType must be either 'Daily' or 'Weekly' (case-insensitive)." });
+                return BadRequest(new { Message = "DurationType must be 'Daily' (case-insensitive)." });
             }
-
-            booking.StartTime = new TimeOnly(8, 0);
-            booking.EndTime = new TimeOnly(18, 0);
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Step 4: Validate Desk availability for the given date and time
+                // Step 4: Validate Desk availability for the given date
                 var overlappingBooking = await _context.Booking
                     .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
-                    .Where(b => booking.StartTime < b.EndTime && booking.EndTime > b.StartTime)
                     .FirstOrDefaultAsync();
 
                 if (overlappingBooking != null)
                 {
                     await transaction.RollbackAsync();
-                    return BadRequest(new { Message = "The desk is already booked for the selected date and time." });
+                    return BadRequest(new { Message = "The desk is already booked for the selected date." });
                 }
 
                 // Step 5: Set Desk availability to false
@@ -137,7 +133,7 @@ namespace HotdeskAPI.Controllers
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
 
-                // Step 7: Add to BookFinder
+                // Step 7: Add to BookFinder (remove StartTime/EndTime)
                 var bookFinder = new BookFinder
                 {
                     BookingId = booking.BookingId,
@@ -145,8 +141,6 @@ namespace HotdeskAPI.Controllers
                     UserId = booking.UserId,
                     UserName = booking.UserName,
                     BookingDate = booking.BookingDate,
-                    StartTime = DateTime.Today.Add(booking.StartTime.ToTimeSpan()),
-                    EndTime = DateTime.Today.Add(booking.EndTime.ToTimeSpan()),
                     CheckedIn = booking.CheckedIn,
                     CheckInTime = booking.CheckInTime,
                     IsAvailable = false
@@ -156,18 +150,16 @@ namespace HotdeskAPI.Controllers
 
                 await transaction.CommitAsync();
 
-                // Step 8: Return booking info with start/end time message
+                // Step 8: Return booking info
                 return Ok(new
                 {
-                    Message = $"Booking created. Book started at {booking.StartTime:hh\\:mm} and ended at {booking.EndTime:hh\\:mm} for this working {(durationType == "daily" ? "day" : "week")}.",
+                    Message = $"Booking created for this working day.",
                     booking.BookingId,
                     booking.DeskId,
                     booking.UserId,
                     booking.UserName,
                     booking.BookingDate,
-                    booking.DurationType,
-                    booking.StartTime,
-                    booking.EndTime
+                    booking.DurationType
                 });
             }
             catch (Exception ex)
@@ -176,9 +168,6 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
-
-
-
 
 
 

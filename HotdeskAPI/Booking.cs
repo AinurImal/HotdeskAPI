@@ -15,7 +15,7 @@ namespace Hotdesk.Models
     public class Booking
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Auto-generated
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BookingId { get; set; }
 
         [ForeignKey(nameof(Desk))]
@@ -24,14 +24,8 @@ namespace Hotdesk.Models
         public string UserId { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public DateTime BookingDate { get; set; }
-        
-        public string DurationType { get; set; } = string.Empty; // In Booking.cs, change the property to string and set default value to empty
+        public string DurationType { get; set; } = string.Empty;
 
-
-        public TimeOnly StartTime { get; set; } // Changed to TimeOnly
-        public TimeOnly EndTime { get; set; }   // Changed to TimeOnly
-
-        
         public bool CheckedIn { get; set; }
         public DateTime? CheckInTime { get; set; }
 
