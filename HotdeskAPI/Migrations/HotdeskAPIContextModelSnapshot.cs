@@ -61,7 +61,10 @@ namespace HotdeskAPI.Migrations
             modelBuilder.Entity("Hotdesk.Components.Models.Desk", b =>
                 {
                     b.Property<int>("DeskId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DeskId"));
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");

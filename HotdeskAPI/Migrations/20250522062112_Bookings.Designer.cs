@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotdeskAPI.Migrations
 {
     [DbContext(typeof(HotdeskAPIContext))]
-    [Migration("20250521085408_Desks")]
-    partial class Desks
+    [Migration("20250522062112_Bookings")]
+    partial class Bookings
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,7 +64,10 @@ namespace HotdeskAPI.Migrations
             modelBuilder.Entity("Hotdesk.Components.Models.Desk", b =>
                 {
                     b.Property<int>("DeskId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DeskId"));
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");

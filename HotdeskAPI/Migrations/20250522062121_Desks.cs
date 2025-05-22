@@ -5,7 +5,7 @@
 namespace HotdeskAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class Bookings : Migration
+    public partial class Desks : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
