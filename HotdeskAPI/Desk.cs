@@ -8,7 +8,7 @@ namespace Hotdesk.Components.Models
     public class Desk
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.None)] // Desk ID manually entered
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Auto-generate unique DeskId
         public int DeskId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;

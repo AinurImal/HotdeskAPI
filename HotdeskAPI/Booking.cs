@@ -21,7 +21,7 @@ namespace Hotdesk.Models
         [ForeignKey(nameof(Desk))]
         public int DeskId { get; set; }
 
-        public string UserId { get; set; } = string.Empty;
+        public string UserId { get; set; } = Guid.NewGuid().ToString(); // Unique UserId
         public string UserName { get; set; } = string.Empty;
         public DateTime BookingDate { get; set; }
         public string DurationType { get; set; } = string.Empty;
