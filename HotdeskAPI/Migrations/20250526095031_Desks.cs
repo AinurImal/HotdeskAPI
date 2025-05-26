@@ -20,6 +20,7 @@ namespace HotdeskAPI.Migrations
                     DeskId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
                     CheckInTime = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -53,8 +54,9 @@ namespace HotdeskAPI.Migrations
                     BookingId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DeskId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DurationType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
