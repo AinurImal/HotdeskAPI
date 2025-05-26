@@ -11,9 +11,9 @@
 			4.	Book a desk for a specific user - Need to be updated (must be unique ID)
 			5.	Book a desk for a specific date - Need to be updated 
 		iii.	Unique desk ID + User ID + date - in progress 			
-			1.	Desk ID - unique ID for each desk
-			2.	User ID - unique ID for each user
-			3.	Date - date of booking
+			1.	Desk ID - unique ID for each desk (already implemented)
+			2.	User ID - unique ID for each user (added phone number on 26/5/2025)
+			3.	Date - date of booking 
 			4.	Time - time of booking 
 	c.	CheckDesk for availability of the desk
 		i.	Date and Time checking – update in progress, will be using weekly and daily book only
