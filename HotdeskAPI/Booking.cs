@@ -21,8 +21,10 @@ namespace Hotdesk.Models
         [ForeignKey(nameof(Desk))]
         public int DeskId { get; set; }
 
-        public required string UserId { get; set; }
-        public string UserName { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;    // Input by user
+        public string PhoneNumber { get; set; } = string.Empty; // Input by user
+        public string UserId { get; set; } = string.Empty;      // Will be generated, not input by user
+
         public DateTime BookingDate { get; set; }
         public string DurationType { get; set; } = string.Empty;
 
@@ -32,4 +34,5 @@ namespace Hotdesk.Models
         [JsonIgnore]
         public virtual Desk? Desk { get; set; }
     }
+
 }

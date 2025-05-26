@@ -82,105 +82,96 @@ namespace HotdeskAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<object>> PostBooking(Booking booking)
         {
-            // Step 1: Validate UserId
-            if (string.IsNullOrWhiteSpace(booking.UserId))
-            {
-                return BadRequest(new { Message = "UserId is required and cannot be empty." });
-            }
-            // UserId must be numeric and between 1001 and 9999
-            if (!int.TryParse(booking.UserId, out int userIdNumber) || userIdNumber < 1001 || userIdNumber > 9999)
-            {
-                return BadRequest(new { Message = "UserId must be a number between 1001 and 9999." });
-            }
-            // UserId must be unique for the same booking date
-            if (_context.Booking.Any(b => b.UserId == booking.UserId && b.BookingDate.Date == booking.BookingDate.Date))
-            {
-                return Conflict(new { Message = "UserId already has a booking for this date." });
-            }
-
-            // Step 2: Validate UserName
+            // Step 1: Validate UserName and PhoneNumber
             if (string.IsNullOrWhiteSpace(booking.UserName))
             {
                 return BadRequest(new { Message = "UserName is required and cannot be empty." });
             }
-            if (booking.UserName.Length < 2 || booking.UserName.Length > 50)
+            if (string.IsNullOrWhiteSpace(booking.PhoneNumber))
             {
-                return BadRequest(new { Message = "UserName must be between 2 and 50 characters." });
+                return BadRequest(new { Message = "PhoneNumber is required and cannot be empty." });
             }
 
-            // Step 3: Validate DeskId
-            if (booking.DeskId < 1)
-            {
-                return BadRequest(new { Message = "DeskId must be a positive integer." });
-            }
-            var desk = await _context.Desk.FindAsync(booking.DeskId);
-            if (desk == null)
-            {
-                return BadRequest(new { Message = "Desk not found." });
-            }
-            if (!desk.IsAvailable)
-            {
-                return BadRequest(new { Message = "Desk is not available." });
-            }
+            // Step 2: Generate UserId from UserName and PhoneNumber
+            booking.UserId = Convert.ToBase64String(
+                System.Security.Cryptography.SHA256.HashData(
+                    System.Text.Encoding.UTF8.GetBytes($"{booking.UserName}:{booking.PhoneNumber}")
+                )
+            );
 
-            // Step 4: Validate BookingDate (cannot be in the past)
-            if (booking.BookingDate.Date < DateTime.Today)
-            {
-                return BadRequest(new { Message = "BookingDate cannot be in the past." });
-            }
-
-            // Step 5: Only allow "Daily" as DurationType
+            // Step 3: Only allow "Daily" as DurationType
             var durationType = booking.DurationType?.Trim().ToLower();
             if (durationType != "daily")
             {
                 return BadRequest(new { Message = "DurationType must be 'Daily' (case-insensitive)." });
             }
 
-            // Step 6: Check for overlapping bookings for the same desk and date
-            var overlappingBooking = await _context.Booking
-                .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
-                .FirstOrDefaultAsync();
-
-            if (overlappingBooking != null)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                return BadRequest(new { Message = "The desk is already booked for the selected date." });
+                // Step 4: Validate Desk availability for the given date
+                var overlappingBooking = await _context.Booking
+                    .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
+                    .FirstOrDefaultAsync();
+
+                if (overlappingBooking != null)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new { Message = "The desk is already booked for the selected date." });
+                }
+
+                // Step 5: Set Desk availability to false
+                var desk = await _context.Desk.FindAsync(booking.DeskId);
+                if (desk == null)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new { Message = "Desk not found." });
+                }
+                desk.IsAvailable = false;
+                _context.Entry(desk).State = EntityState.Modified;
+
+                // Step 6: Save booking
+                _context.Booking.Add(booking);
+                await _context.SaveChangesAsync();
+
+                // Step 7: Add to BookFinder (if needed, update BookFinder model accordingly)
+                var bookFinder = new BookFinder
+                {
+                    BookingId = booking.BookingId,
+                    DeskId = booking.DeskId,
+                    UserName = booking.UserName,
+                    PhoneNumber = booking.PhoneNumber,
+                    UserId = booking.UserId,
+                    BookingDate = booking.BookingDate,
+                    CheckedIn = booking.CheckedIn,
+                    CheckInTime = booking.CheckInTime,
+                    IsAvailable = false
+                };
+                _context.BookFinder.Add(bookFinder);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                // Step 8: Return booking info
+                return Ok(new
+                {
+                    Message = $"Booking created for this working day.",
+                    booking.BookingId,
+                    booking.DeskId,
+                    booking.UserName,
+                    booking.PhoneNumber,
+                    booking.UserId,
+                    booking.BookingDate,
+                    booking.DurationType
+                });
             }
-
-            // Step 7: Set Desk availability to false
-            desk.IsAvailable = false;
-            _context.Entry(desk).State = EntityState.Modified;
-
-            // Step 8: Save booking
-            _context.Booking.Add(booking);
-            await _context.SaveChangesAsync();
-
-            // Step 9: Add to BookFinder
-            var bookFinder = new BookFinder
+            catch (Exception ex)
             {
-                BookingId = booking.BookingId,
-                DeskId = booking.DeskId,
-                UserId = booking.UserId,
-                UserName = booking.UserName,
-                BookingDate = booking.BookingDate,
-                CheckedIn = booking.CheckedIn,
-                CheckInTime = booking.CheckInTime,
-                IsAvailable = false
-            };
-            _context.BookFinder.Add(bookFinder);
-            await _context.SaveChangesAsync();
-
-            // Step 10: Return booking info
-            return Ok(new
-            {
-                Message = $"Booking created for this working day.",
-                booking.BookingId,
-                booking.DeskId,
-                booking.UserId,
-                booking.UserName,
-                booking.BookingDate,
-                booking.DurationType
-            });
+                await transaction.RollbackAsync();
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
+            }
         }
+
 
 
 

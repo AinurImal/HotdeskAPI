@@ -6,16 +6,16 @@ namespace Hotdesk.Components.Models
     {
         [Key]
         public int BookingId { get; set; } // Unique identifier for the booking
-        public int DeskId { get; set; } // Associated desk ID
+        public int DeskId { get; set; }    // Associated desk ID
         public string UserId { get; set; } = string.Empty; // User ID who made the booking
         public string UserName { get; set; } = string.Empty; // User's name
+        public string PhoneNumber { get; set; } = string.Empty; // User's phone number
         public DateTime BookingDate { get; set; } // Date of the booking
         public bool CheckedIn { get; set; } // Whether the user has checked in
         public DateTime? CheckInTime { get; set; } // Time of check-in, if applicable
-
-        public bool IsAvailable { get; set; } // Use to check desk availability
-
+        public bool IsAvailable { get; set; } // Whether the desk is available
     }
+
 }
 
 
