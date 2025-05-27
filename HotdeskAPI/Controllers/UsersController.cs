@@ -78,6 +78,33 @@ namespace HotdeskAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(user.FullName))
+                return BadRequest(new { Message = "FullName is required." });
+            if (string.IsNullOrWhiteSpace(user.UserName))
+                return BadRequest(new { Message = "UserName is required." });
+            if (string.IsNullOrWhiteSpace(user.PhoneNumber))
+                return BadRequest(new { Message = "PhoneNumber is required." });
+            if (!System.Text.RegularExpressions.Regex.IsMatch(user.PhoneNumber, @"^0\d{9}$"))
+                return BadRequest(new { Message = "PhoneNumber must be in the format 0123456789." });
+
+            // Check for existing user with same UserName and PhoneNumber
+            var existingUser = await _context.User
+                .FirstOrDefaultAsync(u => u.UserName == user.UserName && u.PhoneNumber == user.PhoneNumber);
+            if (existingUser != null)
+                return Conflict(new { Message = "User already exists.", UserId = existingUser.UserId });
+
+            // Generate unique UserId (e.g., next available 4-digit number as string)
+            string newUserId;
+            var usedIds = _context.User.Select(u => u.UserId).ToHashSet();
+            int candidate = 1001;
+            do
+            {
+                newUserId = candidate.ToString();
+                candidate++;
+            } while (usedIds.Contains(newUserId));
+            user.UserId = newUserId;
+
             _context.User.Add(user);
             try
             {
@@ -86,17 +113,14 @@ namespace HotdeskAPI.Controllers
             catch (DbUpdateException)
             {
                 if (UserExists(user.UserId))
-                {
                     return Conflict();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return CreatedAtAction("GetUser", new { id = user.UserId }, user);
         }
+
 
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
