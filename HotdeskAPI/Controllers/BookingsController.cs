@@ -82,29 +82,24 @@ namespace HotdeskAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<object>> PostBooking(Booking booking)
         {
-            // Step 1: Validate UserName and PhoneNumber
-            if (string.IsNullOrWhiteSpace(booking.UserName))
-            {
-                return BadRequest(new { Message = "UserName is required and cannot be empty." });
-            }
-            if (string.IsNullOrWhiteSpace(booking.PhoneNumber))
-            {
-                return BadRequest(new { Message = "PhoneNumber is required and cannot be empty." });
-            }
+            // Step 1: Validate UserId (must be provided and exist in User table)
+            if (string.IsNullOrWhiteSpace(booking.UserId))
+                return BadRequest(new { Message = "UserId is required and cannot be empty." });
 
-            // Step 2: Generate UserId from UserName and PhoneNumber
-            booking.UserId = Convert.ToBase64String(
-                System.Security.Cryptography.SHA256.HashData(
-                    System.Text.Encoding.UTF8.GetBytes($"{booking.UserName}:{booking.PhoneNumber}")
-                )
-            );
+            var user = await _context.User.FindAsync(booking.UserId);
+            if (user == null)
+                return BadRequest(new { Message = "UserId does not exist. Please register the user first." });
+
+            // Step 2: Validate UserName and PhoneNumber match User table
+            if (!string.Equals(user.UserName, booking.UserName, StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { Message = "UserName does not match the UserId." });
+            if (!string.Equals(user.PhoneNumber, booking.PhoneNumber, StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { Message = "PhoneNumber does not match the UserId." });
 
             // Step 3: Only allow "Daily" as DurationType
             var durationType = booking.DurationType?.Trim().ToLower();
             if (durationType != "daily")
-            {
                 return BadRequest(new { Message = "DurationType must be 'Daily' (case-insensitive)." });
-            }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -127,6 +122,11 @@ namespace HotdeskAPI.Controllers
                     await transaction.RollbackAsync();
                     return BadRequest(new { Message = "Desk not found." });
                 }
+                if (!desk.IsAvailable)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new { Message = "Desk is not available." });
+                }
                 desk.IsAvailable = false;
                 _context.Entry(desk).State = EntityState.Modified;
 
@@ -134,7 +134,7 @@ namespace HotdeskAPI.Controllers
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
 
-                // Step 7: Add to BookFinder (if needed, update BookFinder model accordingly)
+                // Step 7: Add to BookFinder (if needed)
                 var bookFinder = new BookFinder
                 {
                     BookingId = booking.BookingId,
@@ -171,6 +171,7 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
+
 
 
 

@@ -18,5 +18,6 @@ namespace HotdeskAPI.Data
         public DbSet<Hotdesk.Components.Models.Desk> Desk { get; set; } = default!;
         public DbSet<Hotdesk.Models.Booking> Booking { get; set; } = default!;
         public DbSet<Hotdesk.Components.Models.BookFinder> BookFinder { get; set; } = default!;
+        public DbSet<Hotdesk.Models.User> User { get; set; } = default!;
     }
 }
