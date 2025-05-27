@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotdeskAPI.Migrations
 {
     [DbContext(typeof(HotdeskAPIContext))]
-    [Migration("20250527040612_Users")]
+    [Migration("20250527074034_Users")]
     partial class Users
     {
         /// <inheritdoc />
