@@ -1,7 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hotdesk.Models
 {
+    [Index(nameof(UserName), IsUnique = true)]
+    [Index(nameof(PhoneNumber), IsUnique = true)]
     public class User
     {
         [Key]
@@ -18,7 +21,7 @@ namespace Hotdesk.Models
 
         [Required]
         [RegularExpression(@"^0\d{9}$", ErrorMessage = "Phone number must be in the format 0123456789.")]
-        public string PhoneNumber { get; set; } = string.Empty; // Input by user, format 0123456789
+        public string PhoneNumber { get; set; } = string.Empty; // Input by user, unique, format 0123456789
     }
 }
 

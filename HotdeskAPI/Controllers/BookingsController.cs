@@ -94,10 +94,7 @@ namespace HotdeskAPI.Controllers
             if (user == null)
                 return BadRequest(new { Message = "UserName and UserId do not match any registered user." });
 
-            // Step 3: Auto-fill PhoneNumber from user record
-            booking.PhoneNumber = user.PhoneNumber;
-
-            // Step 4: Only allow "Daily" as DurationType
+            // Step 3: Only allow "Daily" as DurationType
             var durationType = booking.DurationType?.Trim().ToLower();
             if (durationType != "daily")
                 return BadRequest(new { Message = "DurationType must be 'Daily' (case-insensitive)." });
@@ -105,7 +102,7 @@ namespace HotdeskAPI.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Step 5: Validate Desk availability for the given date
+                // Step 4: Validate Desk availability for the given date
                 var overlappingBooking = await _context.Booking
                     .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
                     .FirstOrDefaultAsync();
@@ -116,7 +113,7 @@ namespace HotdeskAPI.Controllers
                     return BadRequest(new { Message = "The desk is already booked for the selected date." });
                 }
 
-                // Step 6: Set Desk availability to false
+                // Step 5: Set Desk availability to false
                 var desk = await _context.Desk.FindAsync(booking.DeskId);
                 if (desk == null)
                 {
@@ -131,17 +128,16 @@ namespace HotdeskAPI.Controllers
                 desk.IsAvailable = false;
                 _context.Entry(desk).State = EntityState.Modified;
 
-                // Step 7: Save booking
+                // Step 6: Save booking
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
 
-                // Step 8: Add to BookFinder (if needed)
+                // Step 7: Add to BookFinder (if needed)
                 var bookFinder = new BookFinder
                 {
                     BookingId = booking.BookingId,
                     DeskId = booking.DeskId,
                     UserName = booking.UserName,
-                    PhoneNumber = booking.PhoneNumber,
                     UserId = booking.UserId,
                     BookingDate = booking.BookingDate,
                     CheckedIn = booking.CheckedIn,
@@ -153,14 +149,13 @@ namespace HotdeskAPI.Controllers
 
                 await transaction.CommitAsync();
 
-                // Step 9: Return booking info
+                // Step 8: Return booking info
                 return Ok(new
                 {
                     Message = $"Booking created for this working day.",
                     booking.BookingId,
                     booking.DeskId,
                     booking.UserName,
-                    booking.PhoneNumber,
                     booking.UserId,
                     booking.BookingDate,
                     booking.DurationType
@@ -172,6 +167,8 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
+
+
 
 
 
