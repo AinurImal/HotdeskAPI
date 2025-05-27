@@ -26,3 +26,11 @@
 	a.	Use for the admin to list the desk that will be setup in the office
 3.	Sign in:
 	a.	To differentiate between user and administrator
+4.	User profile:
+	a.	User can create their profile
+		i. User can add their phone number  (updated on 27/5/2025))
+		ii. User can add their full name	(updated on 27/5/2025))
+		iii. User can add their username    (updated on 27/5/2025)))
+		iv. Unique ID for each user		
+	b.	User can view their booking history
+	c.	User can cancel their booking
