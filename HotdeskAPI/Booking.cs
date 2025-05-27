@@ -22,12 +22,12 @@ namespace Hotdesk.Models
         public int DeskId { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        public string UserName { get; set; } = string.Empty; // Align with User.UserName
-
-        [Required]
         [MaxLength(8)]
-        public string UserId { get; set; } = string.Empty; // Align with User.UserId
+        public string UserId { get; set; } = string.Empty; // FK to User.UserId
+
+        // Optional: Keep this only if you need redundancy
+        [MaxLength(50)]
+        public string UserName { get; set; } = string.Empty;
 
         public DateTime BookingDate { get; set; }
         public string DurationType { get; set; } = string.Empty;
@@ -37,6 +37,9 @@ namespace Hotdesk.Models
 
         [JsonIgnore]
         public virtual Desk? Desk { get; set; }
+
+        [JsonIgnore]
+        public virtual User? User { get; set; } // Navigation property
     }
 }
 
