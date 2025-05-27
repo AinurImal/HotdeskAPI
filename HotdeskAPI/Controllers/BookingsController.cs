@@ -82,21 +82,22 @@ namespace HotdeskAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<object>> PostBooking(Booking booking)
         {
-            // Step 1: Validate UserId (must be provided and exist in User table)
+            // Step 1: Validate UserName and UserId
+            if (string.IsNullOrWhiteSpace(booking.UserName))
+                return BadRequest(new { Message = "UserName is required and cannot be empty." });
             if (string.IsNullOrWhiteSpace(booking.UserId))
                 return BadRequest(new { Message = "UserId is required and cannot be empty." });
 
-            var user = await _context.User.FindAsync(booking.UserId);
+            // Step 2: Check if UserName and UserId match a user in the database
+            var user = await _context.User
+                .FirstOrDefaultAsync(u => u.UserId == booking.UserId && u.UserName == booking.UserName);
             if (user == null)
-                return BadRequest(new { Message = "UserId does not exist. Please register the user first." });
+                return BadRequest(new { Message = "UserName and UserId do not match any registered user." });
 
-            // Step 2: Validate UserName and PhoneNumber match User table
-            if (!string.Equals(user.UserName, booking.UserName, StringComparison.OrdinalIgnoreCase))
-                return BadRequest(new { Message = "UserName does not match the UserId." });
-            if (!string.Equals(user.PhoneNumber, booking.PhoneNumber, StringComparison.OrdinalIgnoreCase))
-                return BadRequest(new { Message = "PhoneNumber does not match the UserId." });
+            // Step 3: Auto-fill PhoneNumber from user record
+            booking.PhoneNumber = user.PhoneNumber;
 
-            // Step 3: Only allow "Daily" as DurationType
+            // Step 4: Only allow "Daily" as DurationType
             var durationType = booking.DurationType?.Trim().ToLower();
             if (durationType != "daily")
                 return BadRequest(new { Message = "DurationType must be 'Daily' (case-insensitive)." });
@@ -104,7 +105,7 @@ namespace HotdeskAPI.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Step 4: Validate Desk availability for the given date
+                // Step 5: Validate Desk availability for the given date
                 var overlappingBooking = await _context.Booking
                     .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
                     .FirstOrDefaultAsync();
@@ -115,7 +116,7 @@ namespace HotdeskAPI.Controllers
                     return BadRequest(new { Message = "The desk is already booked for the selected date." });
                 }
 
-                // Step 5: Set Desk availability to false
+                // Step 6: Set Desk availability to false
                 var desk = await _context.Desk.FindAsync(booking.DeskId);
                 if (desk == null)
                 {
@@ -130,11 +131,11 @@ namespace HotdeskAPI.Controllers
                 desk.IsAvailable = false;
                 _context.Entry(desk).State = EntityState.Modified;
 
-                // Step 6: Save booking
+                // Step 7: Save booking
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
 
-                // Step 7: Add to BookFinder (if needed)
+                // Step 8: Add to BookFinder (if needed)
                 var bookFinder = new BookFinder
                 {
                     BookingId = booking.BookingId,
@@ -152,7 +153,7 @@ namespace HotdeskAPI.Controllers
 
                 await transaction.CommitAsync();
 
-                // Step 8: Return booking info
+                // Step 9: Return booking info
                 return Ok(new
                 {
                     Message = $"Booking created for this working day.",
@@ -171,6 +172,7 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
+
 
 
 
