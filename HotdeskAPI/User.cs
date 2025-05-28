@@ -9,19 +9,21 @@ namespace Hotdesk.Models
     {
         [Key]
         [MaxLength(8)]
-        public string UserId { get; set; } = string.Empty; // Unique, auto-generated (e.g., "1001", "1002", ...)
+        public string UserId { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(100)]
-        public string FullName { get; set; } = string.Empty; // Input by user
+        public string FullName { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(50)]
-        public string UserName { get; set; } = string.Empty; // Input by user, unique
+        public string UserName { get; set; } = string.Empty;
 
         [Required]
         [RegularExpression(@"^0\d{9}$", ErrorMessage = "Phone number must be in the format 0123456789.")]
-        public string PhoneNumber { get; set; } = string.Empty; // Input by user, unique, format 0123456789
+        public string PhoneNumber { get; set; } = string.Empty;
     }
 }
+
+
 

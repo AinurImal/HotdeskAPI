@@ -127,6 +127,8 @@ namespace HotdeskAPI.Migrations
 
                     b.HasIndex("DeskId");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Booking");
                 });
 
@@ -169,7 +171,15 @@ namespace HotdeskAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Hotdesk.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Desk");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Hotdesk.Components.Models.Desk", b =>

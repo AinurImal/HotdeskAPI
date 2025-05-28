@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HotdeskAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class Desks : Migration
+    public partial class Bookings : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -68,8 +68,8 @@ namespace HotdeskAPI.Migrations
                     BookingId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DeskId = table.Column<int>(type: "int", nullable: false),
-                    UserName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DurationType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
@@ -84,12 +84,23 @@ namespace HotdeskAPI.Migrations
                         principalTable: "Desk",
                         principalColumn: "DeskId",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Booking_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Booking_DeskId",
                 table: "Booking",
                 column: "DeskId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Booking_UserId",
+                table: "Booking",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_PhoneNumber",
@@ -114,10 +125,10 @@ namespace HotdeskAPI.Migrations
                 name: "Booking");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "Desk");
 
             migrationBuilder.DropTable(
-                name: "Desk");
+                name: "User");
         }
     }
 }

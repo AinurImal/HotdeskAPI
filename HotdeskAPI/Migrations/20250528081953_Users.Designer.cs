@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HotdeskAPI.Migrations
 {
     [DbContext(typeof(HotdeskAPIContext))]
-    [Migration("20250527082435_Bookings")]
-    partial class Bookings
+    [Migration("20250528081953_Users")]
+    partial class Users
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -130,6 +130,8 @@ namespace HotdeskAPI.Migrations
 
                     b.HasIndex("DeskId");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Booking");
                 });
 
@@ -172,7 +174,15 @@ namespace HotdeskAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Hotdesk.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Desk");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Hotdesk.Components.Models.Desk", b =>
