@@ -19,7 +19,6 @@ namespace HotdeskAPI.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DeskId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
@@ -69,7 +68,6 @@ namespace HotdeskAPI.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DeskId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
-                    UserName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DurationType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
@@ -90,6 +88,7 @@ namespace HotdeskAPI.Migrations
                         principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
+
                 });
 
             migrationBuilder.CreateIndex(

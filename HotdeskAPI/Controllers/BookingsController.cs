@@ -43,10 +43,7 @@ namespace HotdeskAPI.Controllers
             return booking;
         }
 
-
-
         // PUT: api/Bookings/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBooking(int id, Booking booking)
         {
@@ -76,8 +73,6 @@ namespace HotdeskAPI.Controllers
             return NoContent();
         }
 
-        // POST: api/Bookings
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         // POST: api/Bookings
         [HttpPost]
         public async Task<ActionResult<object>> PostBooking(Booking booking)
@@ -129,23 +124,9 @@ namespace HotdeskAPI.Controllers
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
 
-                // Step 7: Add to BookFinder (if needed)
-                var bookFinder = new BookFinder
-                {
-                    BookingId = booking.BookingId,
-                    DeskId = booking.DeskId,
-                    UserId = booking.UserId,
-                    BookingDate = booking.BookingDate,
-                    CheckedIn = booking.CheckedIn,
-                    CheckInTime = booking.CheckInTime,
-                    IsAvailable = false
-                };
-                _context.BookFinder.Add(bookFinder);
-                await _context.SaveChangesAsync();
-
                 await transaction.CommitAsync();
 
-                // Step 8: Return booking info
+                // Step 7: Return booking info
                 return Ok(new
                 {
                     Message = $"Booking created for this working day.",
@@ -162,10 +143,6 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
-
-
-
-
 
         // DELETE: api/Bookings/5
         [HttpDelete("{id}")]
@@ -189,3 +166,4 @@ namespace HotdeskAPI.Controllers
         }
     }
 }
+
