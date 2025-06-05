@@ -94,39 +94,22 @@ namespace HotdeskAPI.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Step 4: Validate Desk availability for the given date
+                // Step 4: Prevent double booking for the same desk and date
                 var overlappingBooking = await _context.Booking
-                    .Where(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date)
-                    .FirstOrDefaultAsync();
+                    .AnyAsync(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date);
 
-                if (overlappingBooking != null)
+                if (overlappingBooking)
                 {
-                    await transaction.RollbackAsync();
-                    return BadRequest(new { Message = "The desk is already booked for the selected date." });
+                    return BadRequest(new { Message = "The desk is already booked for the selected date. Please choose another date." });
                 }
 
-                // Step 5: Set Desk availability to false (optional, if you want to mark desk as unavailable for the day)
-                var desk = await _context.Desk.FindAsync(booking.DeskId);
-                if (desk == null)
-                {
-                    await transaction.RollbackAsync();
-                    return BadRequest(new { Message = "Desk not found." });
-                }
-                if (!desk.IsAvailable)
-                {
-                    await transaction.RollbackAsync();
-                    return BadRequest(new { Message = "Desk is not available." });
-                }
-                desk.IsAvailable = false;
-                _context.Entry(desk).State = EntityState.Modified;
-
-                // Step 6: Save booking
+                // Step 5: Save booking
                 _context.Booking.Add(booking);
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 
-                // Step 7: Return booking info
+                // Step 6: Return booking info
                 return Ok(new
                 {
                     Message = $"Booking created for this working day.",
@@ -143,7 +126,6 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
-
 
         // DELETE: api/Bookings/5
         [HttpDelete("{id}")]
@@ -167,4 +149,5 @@ namespace HotdeskAPI.Controllers
         }
     }
 }
+
 

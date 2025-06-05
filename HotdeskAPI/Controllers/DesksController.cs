@@ -29,17 +29,26 @@ namespace HotdeskAPI.Controllers
         }
 
         // GET: api/Desks/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Desk>> GetDesk(int id)
+        // GET: api/Desks/{id}/availability?date=2025-06-06
+        [HttpGet("{id}/availability")]
+        public async Task<ActionResult<object>> CheckDeskAvailability(int id, [FromQuery] DateTime date)
         {
             var desk = await _context.Desk.FindAsync(id);
-
             if (desk == null)
-            {
-                return NotFound();
-            }
+                return NotFound(new { Message = "Desk not found." });
 
-            return desk;
+            bool isBooked = await _context.Booking
+                .AnyAsync(b => b.DeskId == id && b.BookingDate.Date == date.Date);
+
+            return Ok(new
+            {
+                DeskId = id,
+                Date = date.Date,
+                IsAvailable = !isBooked,
+                Message = isBooked
+                    ? "The desk is already booked for the selected date. Please choose another date."
+                    : "The desk is available for the selected date."
+            });
         }
 
         // PUT: api/Desks/5
