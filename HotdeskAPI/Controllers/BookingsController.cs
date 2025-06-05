@@ -105,7 +105,7 @@ namespace HotdeskAPI.Controllers
                     return BadRequest(new { Message = "The desk is already booked for the selected date." });
                 }
 
-                // Step 5: Set Desk availability to false
+                // Step 5: Set Desk availability to false (optional, if you want to mark desk as unavailable for the day)
                 var desk = await _context.Desk.FindAsync(booking.DeskId);
                 if (desk == null)
                 {
@@ -143,6 +143,7 @@ namespace HotdeskAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred: {ex.Message}");
             }
         }
+
 
         // DELETE: api/Bookings/5
         [HttpDelete("{id}")]

@@ -12,11 +12,11 @@
 			5.	Book a desk for a specific date - Need to be updated 
 		iii.	Unique desk ID + User ID + date - in progress 			
 			1.	Desk ID - unique ID for each desk (already implemented)
-			2.	User ID - unique ID for each user (added phone number on 26/5/2025)
+			2.	User ID - unique ID for each user (added phone number on 26/5/2025)(created user entity on 27/5/2025)	
 			3.	Date - date of booking 
-			4.	Time - time of booking 
+			4.	Time - time of booking (can be book from 8am-5pm daily only)
 	c.	CheckDesk for availability of the desk
-		i.	Date and Time checking – update in progress, will be using weekly and daily book only
+		i.	Date and Time checking – update in progress, will be using daily book only at this moment
 	d.	BookFinder - update in progress
 		i.	Search for available desk
 		ii.	Search for available desk by date and time
@@ -34,3 +34,11 @@
 		iv. Unique ID for each user		
 	b.	User can view their booking history
 	c.	User can cancel their booking
+5. Desk availability:
+   a. Admin can view the availability of desks
+   b. User can view available desks for booking
+   c. Real-time updates on desk availability
+6. Book Finder:
+   a. Search for user booking on their desk selection
+   b. Filter desks by user id, desk name, location, date, and time
+  
