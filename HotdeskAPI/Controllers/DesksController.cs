@@ -31,25 +31,34 @@ namespace HotdeskAPI.Controllers
         // GET: api/Desks/5
         // GET: api/Desks/{id}/availability?date=2025-06-06
         [HttpGet("{id}/availability")]
-        public async Task<ActionResult<object>> CheckDeskAvailability(int id, [FromQuery] DateTime date)
+        public async Task<ActionResult<object>> CheckDeskAvailability(int id, [FromQuery] string date)
         {
             var desk = await _context.Desk.FindAsync(id);
             if (desk == null)
                 return NotFound(new { Message = "Desk not found." });
 
+            // Accept both dd/MM/yyyy and yyyy/MM/dd formats
+            string[] formats = { "dd/MM/yyyy", "yyyy/MM/dd", "yyyy-MM-dd" };
+            if (!DateTime.TryParseExact(date, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
+            {
+                return BadRequest(new { Message = "Invalid date format. Please use dd/MM/yyyy or yyyy/MM/dd." });
+            }
+
             bool isBooked = await _context.Booking
-                .AnyAsync(b => b.DeskId == id && b.BookingDate.Date == date.Date);
+                .AnyAsync(b => b.DeskId == id && b.BookingDate.Date == parsedDate.Date);
 
             return Ok(new
             {
                 DeskId = id,
-                Date = date.Date,
+                Date = parsedDate.Date,
                 IsAvailable = !isBooked,
                 Message = isBooked
                     ? "The desk is already booked for the selected date. Please choose another date."
                     : "The desk is available for the selected date."
             });
         }
+
+
 
         // PUT: api/Desks/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
