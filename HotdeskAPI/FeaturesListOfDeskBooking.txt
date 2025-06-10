@@ -34,11 +34,11 @@
 		iv. Unique ID for each user		
 	b.	User can view their booking history
 	c.	User can cancel their booking
-5. Desk availability:
+5. Desk availability (Make new data model for this):
    a. Admin can view the availability of desks - in progress
    b. User can view available desks for booking - in progress
    c. Real-time updates on desk availability - in progress
-6. Book Finder:
+6. Book Finder (Make new data model for this):
    a. Search for user booking on their desk selection
    b. Filter desks by user id, desk name, location, date, and time
   
