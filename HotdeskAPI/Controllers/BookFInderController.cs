@@ -36,6 +36,7 @@ namespace HotdeskAPI.Controllers
                     PhoneNumber = b.User != null ? b.User.PhoneNumber : "",
                     DeskName = b.Desk != null ? b.Desk.Name : "",
                     Location = b.Desk != null ? b.Desk.Location : "",
+                    BookingDate = b.BookingDate,
                     DurationType = b.DurationType
                 })
                 .ToListAsync();
