@@ -39,6 +39,6 @@
    b. User can view available desks for booking - in progress
    c. Real-time updates on desk availability - in progress
 6. Book Finder (Make new data model for this):
-   a. Search for user booking on their desk selection
-   b. Filter desks by user id, desk name, location, date, and time
+   a. Search for user booking on their desk selection (updated on 11/06/2025)
+   b. Filter desks by user id, desk name, location, date, and time (updated on 11/06/2025)
   
