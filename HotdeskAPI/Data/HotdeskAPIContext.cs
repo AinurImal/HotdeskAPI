@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Hotdesk.Components.Models;
 using Hotdesk.Models;
+using HotdeskAPI;
+
 
 namespace HotdeskAPI.Data
 {
@@ -17,6 +19,6 @@ namespace HotdeskAPI.Data
 
         public DbSet<Hotdesk.Components.Models.Desk> Desk { get; set; } = default!;
         public DbSet<Hotdesk.Models.Booking> Booking { get; set; } = default!;
-        public DbSet<Hotdesk.Models.User> User { get; set; } = default!;
+        public DbSet<User> User { get; set; } = default!;
     }
 }

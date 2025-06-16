@@ -19,7 +19,8 @@ namespace Hotdesk.Models
         [Required]
         [MaxLength(8)]
         [ForeignKey(nameof(User))]
-        public string UserId { get; set; } = string.Empty; // FK to User.UserId
+        public Guid UserId { get; set; } // FK to User.UserId
+
 
         public DateTime BookingDate { get; set; }
         public string DurationType { get; set; } = string.Empty;

@@ -78,7 +78,7 @@ namespace HotdeskAPI.Controllers
         public async Task<ActionResult<object>> PostBooking(Booking booking)
         {
             // Step 1: Validate UserId
-            if (string.IsNullOrWhiteSpace(booking.UserId))
+            if (booking.UserId == Guid.Empty)
                 return BadRequest(new { Message = "UserId is required and cannot be empty." });
 
             // Step 2: Lookup user by UserId

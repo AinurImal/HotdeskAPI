@@ -29,8 +29,9 @@ namespace HotdeskAPI.Controllers
         }
 
         // GET: api/Users/5
+        // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(string id)
+        public async Task<ActionResult<User>> GetUser(Guid id)
         {
             var user = await _context.User.FindAsync(id);
 
@@ -45,12 +46,13 @@ namespace HotdeskAPI.Controllers
         // PUT: api/Users/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(string id, User user)
+        public async Task<IActionResult> PutUser(Guid id, User user)
         {
             if (id != user.UserId)
             {
                 return BadRequest();
             }
+
 
             _context.Entry(user).State = EntityState.Modified;
 
@@ -71,6 +73,11 @@ namespace HotdeskAPI.Controllers
             }
 
             return NoContent();
+        }
+
+        private bool UserExists(Guid id)
+        {
+            throw new NotImplementedException();
         }
 
         // POST: api/Users
@@ -94,17 +101,7 @@ namespace HotdeskAPI.Controllers
             if (existingUser != null)
                 return Conflict(new { Message = "User already exists.", UserId = existingUser.UserId });
 
-            // Generate unique UserId (e.g., next available 4-digit number as string)
-            string newUserId;
-            var usedIds = _context.User.Select(u => u.UserId).ToHashSet();
-            int candidate = 1001;
-            do
-            {
-                newUserId = candidate.ToString();
-                candidate++;
-            } while (usedIds.Contains(newUserId));
-            user.UserId = newUserId;
-
+            // UserId will be auto-generated as Guid if not set
             _context.User.Add(user);
             try
             {
@@ -122,9 +119,10 @@ namespace HotdeskAPI.Controllers
         }
 
 
+
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(string id)
+        public async Task<IActionResult> DeleteUser(Guid id)
         {
             var user = await _context.User.FindAsync(id);
             if (user == null)
@@ -138,9 +136,5 @@ namespace HotdeskAPI.Controllers
             return NoContent();
         }
 
-        private bool UserExists(string id)
-        {
-            return _context.User.Any(e => e.UserId == id);
-        }
     }
 }
