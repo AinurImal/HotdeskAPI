@@ -2,6 +2,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Hotdesk.Components.Models;
 using System.Text.Json.Serialization;
+using HotdeskAPI;
+
 
 namespace Hotdesk.Models
 {
