@@ -32,7 +32,7 @@ namespace HotdeskAPI.Controllers
                 {
                     BookingId = b.BookingId,
                     UserName = b.User != null ? b.User.UserName : "",
-                    UserId = b.UserId,
+                    UserId = b.UserId.ToString(),
                     PhoneNumber = b.User != null ? b.User.PhoneNumber : "",
                     DeskName = b.Desk != null ? b.Desk.Name : "",
                     Location = b.Desk != null ? b.Desk.Location : "",
@@ -46,30 +46,31 @@ namespace HotdeskAPI.Controllers
 
         // GET: api/BookFinders/{id}?searchBy=desk|user|booking
         [HttpGet("{id}")]
-        public async Task<ActionResult<IEnumerable<BookFinder>>> GetBookFinder(int id, [FromQuery] string searchBy)
+        public async Task<ActionResult<IEnumerable<BookFinder>>> GetBookFinder(string id, [FromQuery] string searchBy)
         {
             IQueryable<Hotdesk.Models.Booking> query = _context.Booking
                 .Include(b => b.User)
                 .Include(b => b.Desk);
 
-            if (searchBy?.ToLower() == "desk")
-                query = query.Where(b => b.DeskId == id);
-            else if (searchBy?.ToLower() == "user")
-                query = query.Where(b => b.UserId == id.ToString());
-            else if (searchBy?.ToLower() == "booking")
-                query = query.Where(b => b.BookingId == id);
+            if (searchBy?.ToLower() == "desk" && int.TryParse(id, out int deskId))
+                query = query.Where(b => b.DeskId == deskId);
+            else if (searchBy?.ToLower() == "user" && Guid.TryParse(id, out Guid userGuid))
+                query = query.Where(b => b.UserId == userGuid);
+            else if (searchBy?.ToLower() == "booking" && int.TryParse(id, out int bookingId))
+                query = query.Where(b => b.BookingId == bookingId);
             else
-                return BadRequest(new { Message = "searchBy must be 'desk', 'user', or 'booking'" });
+                return BadRequest(new { Message = "searchBy must be 'desk', 'user', or 'booking', and id must be a valid value." });
 
             var results = await query
                 .Select(b => new BookFinder
                 {
                     BookingId = b.BookingId,
                     UserName = b.User != null ? b.User.UserName : "",
-                    UserId = b.UserId,
+                    UserId = b.UserId.ToString(),
                     PhoneNumber = b.User != null ? b.User.PhoneNumber : "",
                     DeskName = b.Desk != null ? b.Desk.Name : "",
                     Location = b.Desk != null ? b.Desk.Location : "",
+                    BookingDate = b.BookingDate,
                     DurationType = b.DurationType
                 })
                 .ToListAsync();
@@ -79,7 +80,8 @@ namespace HotdeskAPI.Controllers
 
             return Ok(results);
         }
-    
+
+
 
 
         // POST api/<BookFInderController>
