@@ -12,25 +12,6 @@ namespace HotdeskAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "BookFinder",
-                columns: table => new
-                {
-                    BookingId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    DeskId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CheckedIn = table.Column<bool>(type: "bit", nullable: false),
-                    CheckInTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsAvailable = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BookFinder", x => x.BookingId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Desk",
                 columns: table => new
                 {
@@ -50,7 +31,7 @@ namespace HotdeskAPI.Migrations
                 name: "User",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     PhoneNumber = table.Column<string>(type: "nvarchar(450)", nullable: false)
@@ -67,7 +48,7 @@ namespace HotdeskAPI.Migrations
                     BookingId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DeskId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", maxLength: 8, nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DurationType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
@@ -88,7 +69,6 @@ namespace HotdeskAPI.Migrations
                         principalTable: "User",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
-
                 });
 
             migrationBuilder.CreateIndex(
@@ -117,9 +97,6 @@ namespace HotdeskAPI.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "BookFinder");
-
             migrationBuilder.DropTable(
                 name: "Booking");
 

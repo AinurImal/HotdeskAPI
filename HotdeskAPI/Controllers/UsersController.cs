@@ -12,14 +12,11 @@ namespace HotdeskAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController : ControllerBase
+    // Using a primary constructor for dependency injection (C# 12 feature)
+    public class UsersController(HotdeskAPIContext context) : ControllerBase
     {
-        private readonly HotdeskAPIContext _context;
-
-        public UsersController(HotdeskAPIContext context)
-        {
-            _context = context;
-        }
+        // The context field is initialized automatically from the primary constructor parameter.
+        private readonly HotdeskAPIContext _context = context;
 
         // GET: api/Users
         [HttpGet]
@@ -28,8 +25,7 @@ namespace HotdeskAPI.Controllers
             return await _context.User.ToListAsync();
         }
 
-        // GET: api/Users/5
-        // GET: api/Users/5
+        // GET: api/Users/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(Guid id)
         {
@@ -43,8 +39,7 @@ namespace HotdeskAPI.Controllers
             return user;
         }
 
-        // PUT: api/Users/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // PUT: api/Users/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(Guid id, User user)
         {
@@ -52,7 +47,6 @@ namespace HotdeskAPI.Controllers
             {
                 return BadRequest();
             }
-
 
             _context.Entry(user).State = EntityState.Modified;
 
@@ -75,13 +69,7 @@ namespace HotdeskAPI.Controllers
             return NoContent();
         }
 
-        private bool UserExists(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
         // POST: api/Users
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
@@ -118,9 +106,7 @@ namespace HotdeskAPI.Controllers
             return CreatedAtAction("GetUser", new { id = user.UserId }, user);
         }
 
-
-
-        // DELETE: api/Users/5
+        // DELETE: api/Users/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
@@ -136,5 +122,12 @@ namespace HotdeskAPI.Controllers
             return NoContent();
         }
 
+        // Checks if a user exists by Guid UserId
+        private bool UserExists(Guid id)
+        {
+            return _context.User.Any(e => e.UserId == id);
+        }
     }
 }
+
+

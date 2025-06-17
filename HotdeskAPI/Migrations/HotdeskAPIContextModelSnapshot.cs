@@ -22,46 +22,6 @@ namespace HotdeskAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Hotdesk.Components.Models.BookFinder", b =>
-                {
-                    b.Property<int>("BookingId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BookingId"));
-
-                    b.Property<DateTime>("BookingDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("CheckInTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("CheckedIn")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("DeskId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("BookingId");
-
-                    b.ToTable("BookFinder");
-                });
-
             modelBuilder.Entity("Hotdesk.Components.Models.Desk", b =>
                 {
                     b.Property<int>("DeskId")
@@ -113,10 +73,9 @@ namespace HotdeskAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
+                    b.Property<Guid>("UserId")
                         .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("BookingId");
 
@@ -127,11 +86,11 @@ namespace HotdeskAPI.Migrations
                     b.ToTable("Booking");
                 });
 
-            modelBuilder.Entity("Hotdesk.Models.User", b =>
+            modelBuilder.Entity("HotdeskAPI.User", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -166,7 +125,7 @@ namespace HotdeskAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Hotdesk.Models.User", "User")
+                    b.HasOne("HotdeskAPI.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
