@@ -4,39 +4,38 @@ using Hotdesk.Components.Models;
 using System.Text.Json.Serialization;
 using HotdeskAPI;
 
-
 namespace Hotdesk.Models
 {
     public class Booking
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int BookingId { get; set; }
+        public int BookingId { get; set; } // Primary key, auto-increment
 
         [ForeignKey(nameof(Desk))]
-        public int DeskId { get; set; }
+        public int DeskId { get; set; } // Foreign key to Desk
 
         [Required]
-        [MaxLength(8)]
-        [ForeignKey(nameof(User))]
-        public Guid UserId { get; set; } // FK to User.UserId
+        [MaxLength(50)]
+        public string UserName { get; set; } = string.Empty; // Foreign key to User.UserName
 
+        public DateTime BookingDate { get; set; } // Date of booking
 
-        public DateTime BookingDate { get; set; }
-        public string DurationType { get; set; } = string.Empty;
-        public bool CheckedIn { get; set; }
-        public DateTime? CheckInTime { get; set; }
+        public string DurationType { get; set; } = string.Empty; // Duration type (e.g., "FullDay", "HalfDay")
 
-        [JsonIgnore]
-        public virtual Desk? Desk { get; set; }
+        public bool CheckedIn { get; set; } // Check-in status
+
+        public DateTime? CheckInTime { get; set; } // Optional check-in time
 
         [JsonIgnore]
-        public virtual User? User { get; set; }
+        public virtual Desk? Desk { get; set; } // Navigation property to Desk
+
+        // Optionally, you can add a navigation property to User if you configure it in your DbContext
+        // [JsonIgnore]
+        // public virtual User? User { get; set; }
     }
-
-
-
 }
+
 
 
 

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Hotdesk.Models;
 using HotdeskAPI.Data;
 
 namespace HotdeskAPI.Controllers
@@ -75,35 +74,51 @@ namespace HotdeskAPI.Controllers
         {
             // Validate required fields
             if (string.IsNullOrWhiteSpace(user.FullName))
-                return BadRequest(new { Message = "FullName is required." });
+                return BadRequest(new { Message = "FullName is required." }); // FullName must not be empty
             if (string.IsNullOrWhiteSpace(user.UserName))
-                return BadRequest(new { Message = "UserName is required." });
+                return BadRequest(new { Message = "UserName is required." }); // UserName must not be empty
             if (string.IsNullOrWhiteSpace(user.PhoneNumber))
-                return BadRequest(new { Message = "PhoneNumber is required." });
+                return BadRequest(new { Message = "PhoneNumber is required." }); // PhoneNumber must not be empty
             if (!System.Text.RegularExpressions.Regex.IsMatch(user.PhoneNumber, @"^0\d{9}$"))
-                return BadRequest(new { Message = "PhoneNumber must be in the format 0123456789." });
+                return BadRequest(new { Message = "PhoneNumber must be in the format 0123456789." }); // PhoneNumber must match pattern
+            if (string.IsNullOrWhiteSpace(user.Email))
+                return BadRequest(new { Message = "Email is required." }); // Email must not be empty
+            if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(user.Email)) // IsValid is an instance method, so you must instantiate EmailAddressAttribute before using it.
+                return BadRequest(new { Message = "Email is not valid." }); // Email must be valid format
 
-            // Check for existing user with same UserName and PhoneNumber
+            // Check for existing user with same UserName, PhoneNumber, or Email
             var existingUser = await _context.User
-                .FirstOrDefaultAsync(u => u.UserName == user.UserName && u.PhoneNumber == user.PhoneNumber);
-            if (existingUser != null)
-                return Conflict(new { Message = "User already exists.", UserId = existingUser.UserId });
+                .FirstOrDefaultAsync(u =>
+                    u.UserName == user.UserName ||
+                    u.PhoneNumber == user.PhoneNumber ||
+                    u.Email == user.Email);
 
-            // UserId will be auto-generated as Guid if not set
-            _context.User.Add(user);
+            if (existingUser != null)
+            {
+                // Return specific message if email is duplicate
+                if (existingUser.Email == user.Email)
+                    return Conflict(new { Message = "Email already exists.", Email = existingUser.Email });
+                if (existingUser.UserName == user.UserName)
+                    return Conflict(new { Message = "UserName already exists.", UserName = existingUser.UserName });
+                if (existingUser.PhoneNumber == user.PhoneNumber)
+                    return Conflict(new { Message = "PhoneNumber already exists.", PhoneNumber = existingUser.PhoneNumber });
+            }
+
+            // Use a transaction to ensure atomicity
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (UserExists(user.UserId))
-                    return Conflict();
-                else
-                    throw;
-            }
+                _context.User.Add(user); // Add new user to context
+                await _context.SaveChangesAsync(); // Save to database
+                await transaction.CommitAsync(); // Commit transaction if successful
 
-            return CreatedAtAction("GetUser", new { id = user.UserId }, user);
+                return CreatedAtAction("GetUser", new { id = user.UserId }, user); // Return created user
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync(); // Rollback transaction on error
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred.", Error = ex.Message }); // Return error to user
+            }
         }
 
         // DELETE: api/Users/{id}

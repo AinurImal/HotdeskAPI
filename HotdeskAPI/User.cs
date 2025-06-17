@@ -3,11 +3,12 @@ using System.ComponentModel.DataAnnotations; // For validation attributes
 using System.ComponentModel.DataAnnotations.Schema; // For [Index] attribute
 using Microsoft.EntityFrameworkCore; // Required for [Index] attribute and other Entity Framework Core features
 
-namespace HotdeskAPI // Add your project's namespace here
+namespace HotdeskAPI
 {
-    // Add unique indexes for UserName and PhoneNumber to enforce uniqueness and improve query performance
+    // Add unique indexes for UserName, PhoneNumber, and Email to enforce uniqueness and improve query performance
     [Index(nameof(UserName), IsUnique = true)] // Ensures UserName is unique in the database
     [Index(nameof(PhoneNumber), IsUnique = true)] // Ensures PhoneNumber is unique in the database
+    [Index(nameof(Email), IsUnique = true)] // Ensures Email is unique in the database
     public class User
     {
         [Key] // Marks this property as the primary key
@@ -24,6 +25,11 @@ namespace HotdeskAPI // Add your project's namespace here
         [Required] // PhoneNumber must be provided
         [RegularExpression(@"^0\d{9}$", ErrorMessage = "Phone number must be in the format 0123456789.")] // Validates phone number format
         public string PhoneNumber { get; set; } = string.Empty; // Stores the user's phone number (must be unique)
+
+        [Required] // Email must be provided
+        [EmailAddress] // Validates email format
+        [MaxLength(100)] // Limits Email to 100 characters
+        public string Email { get; set; } = string.Empty; // Stores the user's email (must be unique)
 
         // Add navigation properties here if you want to reference related entities (e.g., bookings)
     }
