@@ -74,52 +74,67 @@ namespace HotdeskAPI.Controllers
         {
             // Validate required fields
             if (string.IsNullOrWhiteSpace(user.FullName))
-                return BadRequest(new { Message = "FullName is required." }); // FullName must not be empty
+                return BadRequest(new { Message = "FullName is required." });
             if (string.IsNullOrWhiteSpace(user.UserName))
-                return BadRequest(new { Message = "UserName is required." }); // UserName must not be empty
+                return BadRequest(new { Message = "UserName is required." });
             if (string.IsNullOrWhiteSpace(user.PhoneNumber))
-                return BadRequest(new { Message = "PhoneNumber is required." }); // PhoneNumber must not be empty
+                return BadRequest(new { Message = "PhoneNumber is required." });
             if (!System.Text.RegularExpressions.Regex.IsMatch(user.PhoneNumber, @"^0\d{9}$"))
-                return BadRequest(new { Message = "PhoneNumber must be in the format 0123456789." }); // PhoneNumber must match pattern
+                return BadRequest(new { Message = "PhoneNumber must be in the format 0123456789." });
             if (string.IsNullOrWhiteSpace(user.Email))
-                return BadRequest(new { Message = "Email is required." }); // Email must not be empty
-            if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(user.Email)) // IsValid is an instance method, so you must instantiate EmailAddressAttribute before using it.
-                return BadRequest(new { Message = "Email is not valid." }); // Email must be valid format
+                return BadRequest(new { Message = "Email is required." });
+            if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(user.Email))
+                return BadRequest(new { Message = "Email is not valid." });
 
-            // Check for existing user with same UserName, PhoneNumber, or Email
+            // Case-insensitive uniqueness check
             var existingUser = await _context.User
                 .FirstOrDefaultAsync(u =>
-                    u.UserName == user.UserName ||
+                    u.UserName.ToLower() == user.UserName.ToLower() ||
                     u.PhoneNumber == user.PhoneNumber ||
-                    u.Email == user.Email);
+                    u.Email.ToLower() == user.Email.ToLower());
 
             if (existingUser != null)
             {
-                // Return specific message if email is duplicate
-                if (existingUser.Email == user.Email)
+                if (existingUser.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase))
                     return Conflict(new { Message = "Email already exists.", Email = existingUser.Email });
-                if (existingUser.UserName == user.UserName)
+                if (existingUser.UserName.Equals(user.UserName, StringComparison.OrdinalIgnoreCase))
                     return Conflict(new { Message = "UserName already exists.", UserName = existingUser.UserName });
                 if (existingUser.PhoneNumber == user.PhoneNumber)
                     return Conflict(new { Message = "PhoneNumber already exists.", PhoneNumber = existingUser.PhoneNumber });
             }
 
-            // Use a transaction to ensure atomicity
+            // Ensure UserId is unique and not set by client
+            if (user.UserId == Guid.Empty || await _context.User.AnyAsync(u => u.UserId == user.UserId))
+            {
+                user.UserId = Guid.NewGuid();
+            }
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                _context.User.Add(user); // Add new user to context
-                await _context.SaveChangesAsync(); // Save to database
-                await transaction.CommitAsync(); // Commit transaction if successful
+                _context.User.Add(user);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-                return CreatedAtAction("GetUser", new { id = user.UserId }, user); // Return created user
+                return CreatedAtAction("GetUser", new { id = user.UserId }, user);
             }
-            catch (Exception ex)
+            catch (DbUpdateException dbEx)
             {
-                await transaction.RollbackAsync(); // Rollback transaction on error
-                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred.", Error = ex.Message }); // Return error to user
+                await transaction.RollbackAsync();
+
+                // Double-check for unique constraint violation
+                if (await _context.User.AnyAsync(u => u.UserName.ToLower() == user.UserName.ToLower()))
+                    return Conflict(new { Message = "UserName already exists.", UserName = user.UserName });
+                if (await _context.User.AnyAsync(u => u.Email.ToLower() == user.Email.ToLower()))
+                    return Conflict(new { Message = "Email already exists.", Email = user.Email });
+                if (await _context.User.AnyAsync(u => u.PhoneNumber == user.PhoneNumber))
+                    return Conflict(new { Message = "PhoneNumber already exists.", PhoneNumber = user.PhoneNumber });
+
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred.", Error = dbEx.Message });
             }
         }
+
+
 
         // DELETE: api/Users/{id}
         [HttpDelete("{id}")]

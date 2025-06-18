@@ -72,6 +72,22 @@ namespace HotdeskAPI.Controllers
 
             return Ok(results);
         }
+
+        // DELETE: api/BookFinders/{bookingId}
+        [HttpDelete("{bookingId}")]
+        public async Task<IActionResult> DeleteBooking(int bookingId)
+        {
+            var booking = await _context.Booking.FindAsync(bookingId);
+            if (booking == null)
+            {
+                return NotFound(new { Message = "Booking not found." });
+            }
+
+            _context.Booking.Remove(booking);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
 
