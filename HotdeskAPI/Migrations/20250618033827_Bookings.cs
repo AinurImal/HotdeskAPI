@@ -34,7 +34,8 @@ namespace HotdeskAPI.Migrations
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    PhoneNumber = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -48,7 +49,7 @@ namespace HotdeskAPI.Migrations
                     BookingId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DeskId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", maxLength: 8, nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DurationType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CheckedIn = table.Column<bool>(type: "bit", nullable: false),
@@ -63,12 +64,6 @@ namespace HotdeskAPI.Migrations
                         principalTable: "Desk",
                         principalColumn: "DeskId",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Booking_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -77,9 +72,10 @@ namespace HotdeskAPI.Migrations
                 column: "DeskId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Booking_UserId",
-                table: "Booking",
-                column: "UserId");
+                name: "IX_User_Email",
+                table: "User",
+                column: "Email",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_User_PhoneNumber",
@@ -101,10 +97,10 @@ namespace HotdeskAPI.Migrations
                 name: "Booking");
 
             migrationBuilder.DropTable(
-                name: "Desk");
+                name: "User");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "Desk");
         }
     }
 }

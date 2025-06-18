@@ -7,39 +7,32 @@ using System.Linq;
 using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace HotdeskAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BookFindersController : ControllerBase
+    public class BookFindersController(HotdeskAPIContext context) : ControllerBase
     {
-        private readonly HotdeskAPIContext _context;
-
-        public BookFindersController(HotdeskAPIContext context)
-        {
-            _context = context;
-        }
+        private readonly HotdeskAPIContext _context = context;
 
         // GET: api/BookFinders
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookFinder>>> GetBookFinders()
         {
-            var results = await _context.Booking
-                .Include(b => b.User)
-                .Include(b => b.Desk)
-                .Select(b => new BookFinder
-                {
-                    BookingId = b.BookingId,
-                    UserName = b.User != null ? b.User.UserName : "",
-                    UserId = b.UserId.ToString(),
-                    PhoneNumber = b.User != null ? b.User.PhoneNumber : "",
-                    DeskName = b.Desk != null ? b.Desk.Name : "",
-                    Location = b.Desk != null ? b.Desk.Location : "",
-                    BookingDate = b.BookingDate,
-                    DurationType = b.DurationType
-                })
-                .ToListAsync();
+            var results = await (from b in _context.Booking
+                                 join u in _context.User on b.UserName equals u.UserName
+                                 join d in _context.Desk on b.DeskId equals d.DeskId
+                                 select new BookFinder
+                                 {
+                                     BookingId = b.BookingId,
+                                     UserName = b.UserName,
+                                     UserId = u.UserId.ToString(),
+                                     PhoneNumber = u.PhoneNumber,
+                                     DeskName = d.Name,
+                                     Location = d.Location,
+                                     BookingDate = b.BookingDate,
+                                     DurationType = b.DurationType
+                                 }).ToListAsync();
 
             return Ok(results);
         }
@@ -48,70 +41,37 @@ namespace HotdeskAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<IEnumerable<BookFinder>>> GetBookFinder(string id, [FromQuery] string searchBy)
         {
-            IQueryable<Hotdesk.Models.Booking> query = _context.Booking
-                .Include(b => b.User)
-                .Include(b => b.Desk);
+            IQueryable<Hotdesk.Models.Booking> query = _context.Booking;
 
             if (searchBy?.ToLower() == "desk" && int.TryParse(id, out int deskId))
                 query = query.Where(b => b.DeskId == deskId);
-            else if (searchBy?.ToLower() == "user" && Guid.TryParse(id, out Guid userGuid))
-                query = query.Where(b => b.UserId == userGuid);
+            else if (searchBy?.ToLower() == "user")
+                query = query.Where(b => b.UserName == id);
             else if (searchBy?.ToLower() == "booking" && int.TryParse(id, out int bookingId))
                 query = query.Where(b => b.BookingId == bookingId);
             else
                 return BadRequest(new { Message = "searchBy must be 'desk', 'user', or 'booking', and id must be a valid value." });
 
-            var results = await query
-                .Select(b => new BookFinder
-                {
-                    BookingId = b.BookingId,
-                    UserName = b.User != null ? b.User.UserName : "",
-                    UserId = b.UserId.ToString(),
-                    PhoneNumber = b.User != null ? b.User.PhoneNumber : "",
-                    DeskName = b.Desk != null ? b.Desk.Name : "",
-                    Location = b.Desk != null ? b.Desk.Location : "",
-                    BookingDate = b.BookingDate,
-                    DurationType = b.DurationType
-                })
-                .ToListAsync();
+            var results = await (from b in query
+                                 join u in _context.User on b.UserName equals u.UserName
+                                 join d in _context.Desk on b.DeskId equals d.DeskId
+                                 select new BookFinder
+                                 {
+                                     BookingId = b.BookingId,
+                                     UserName = b.UserName,
+                                     UserId = u.UserId.ToString(),
+                                     PhoneNumber = u.PhoneNumber,
+                                     DeskName = d.Name,
+                                     Location = d.Location,
+                                     BookingDate = b.BookingDate,
+                                     DurationType = b.DurationType
+                                 }).ToListAsync();
 
-            if (!results.Any())
+            if (results.Count == 0)
                 return NotFound();
 
             return Ok(results);
         }
-
-
-
-
-        // POST api/<BookFInderController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/<BookFInderController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE: api/BookFinders/{bookingId}
-        [HttpDelete("{bookingId}")]
-        public async Task<IActionResult> DeleteBooking(int bookingId)
-        {
-            var booking = await _context.Booking.FindAsync(bookingId);
-            if (booking == null)
-            {
-                return NotFound(new { Message = "Booking not found." });
-            }
-
-            _context.Booking.Remove(booking);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
     }
 }
 
