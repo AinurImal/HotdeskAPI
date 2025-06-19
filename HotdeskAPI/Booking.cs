@@ -1,40 +1,41 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Hotdesk.Components.Models;
-using System.Text.Json.Serialization;
-using HotdeskAPI;
+﻿using System.ComponentModel.DataAnnotations; // Provides attributes for data validation like [Key], [Required], etc.
+using System.ComponentModel.DataAnnotations.Schema; // Allows configuring how the class maps to the database schema
+using Hotdesk.Components.Models; // Imports the Desk model (assumed to be defined in Components.Models)
+using System.Text.Json.Serialization; // Allows customization of JSON serialization (e.g., ignore navigation properties)
+using HotdeskAPI; // Possibly includes shared types, services, or configuration used in the API project
 
-namespace Hotdesk.Models
+namespace Hotdesk.Models 
 {
-    public class Booking
+    public class Booking // Defines the Booking class to represent a desk reservation
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int BookingId { get; set; } // Primary key, auto-increment
+        [Key] // Specifies this property as the primary key of the table
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Tells EF to auto-increment the BookingId
+        public int BookingId { get; set; } // Unique identifier for each booking (primary key)
 
-        [ForeignKey(nameof(Desk))]
-        public int DeskId { get; set; } // Foreign key to Desk
+        [ForeignKey(nameof(Desk))] // Specifies that DeskId is a foreign key to the Desk table
+        public int DeskId { get; set; } // Stores the ID of the desk being booked
 
-        [Required]
-        [MaxLength(50)]
-        public string UserName { get; set; } = string.Empty; // Foreign key to User.UserName
+        [Required] // Makes UserName mandatory (cannot be null)
+        [MaxLength(50)] // Limits the UserName string to 50 characters
+        public string UserName { get; set; } = string.Empty; // Stores the name of the user who booked
 
-        public DateTime BookingDate { get; set; } // Date of booking
+        public DateTime BookingDate { get; set; } // Stores the date on which the booking is made
 
-        public string DurationType { get; set; } = string.Empty; // Duration type (e.g., "FullDay", "HalfDay")
+        public string DurationType { get; set; } = string.Empty; // Stores the booking duration (e.g., "FullDay", "HalfDay")
 
-        public bool CheckedIn { get; set; } // Check-in status
+        public bool CheckedIn { get; set; } // Indicates whether the user has checked in
 
-        public DateTime? CheckInTime { get; set; } // Optional check-in time
+        public DateTime? CheckInTime { get; set; } // Stores the time of check-in (nullable since it may not happen immediately)
 
-        [JsonIgnore]
-        public virtual Desk? Desk { get; set; } // Navigation property to Desk
+        [JsonIgnore] // Prevents the Desk object from being serialized in API responses (to avoid circular reference or overload)
+        public virtual Desk? Desk { get; set; } // Navigation property to the related Desk entity
 
-        // Optionally, you can add a navigation property to User if you configure it in your DbContext
-        // [JsonIgnore]
-        // public virtual User? User { get; set; }
+        // Optional navigation property to User entity (commented out, can be enabled if User entity is linked)
+        // [JsonIgnore] // Prevent serialization if enabled
+        // public virtual User? User { get; set; } // Navigation property to the User who made the booking
     }
 }
+
 
 
 
