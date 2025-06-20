@@ -13,9 +13,11 @@ namespace HotdeskAPI.Controllers
 {
     [Route("api/[controller]")]          // Route: api/Bookings
     [ApiController]                      // Enables automatic API behavior (model binding, validation, etc.)
-    public class BookingsController(HotdeskAPIContext context) : ControllerBase
+    public class BookingsController(HotdeskAPIContext context) : ControllerBase //Declares a controller class
+                                                                                //injecting the database context via constructor
+                                                                                //Inherits from ControllerBase to provide API-specific functionality
     {
-        private readonly HotdeskAPIContext _context = context; // Dependency injection of the database context
+        private readonly HotdeskAPIContext _context = context; // Stores DB for internal use 
 
         // GET: api/Bookings
         [HttpGet]
@@ -27,22 +29,24 @@ namespace HotdeskAPI.Controllers
                 .ToListAsync();          // Convert result to list asynchronously
         }
 
-        // GET: api/Bookings/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Booking>> GetBooking(int id)
+        // GET: api/Bookings/by id
+        [HttpGet("{id}")] // Maps this method to GET requests with a parameter (e.g., /api/bookings/5)
+        public async Task<ActionResult<Booking>> GetBooking(int id) // Asynchronous method that returns a Booking object wrapped in an HTTP response
         {
-            // Get a specific booking by its BookingId including its desk info
+            // Query the database to find a booking with the specified BookingId
+            // Include the related Desk data (eager loading) in the result
             var booking = await _context.Booking
-                .Include(b => b.Desk)    // Include desk details
-                .FirstOrDefaultAsync(b => b.BookingId == id); // Search for booking
+                .Include(b => b.Desk) // Include the desk details related to the booking
+                .FirstOrDefaultAsync(b => b.BookingId == id); // Get the first booking that matches the given ID, or null if none found
 
-            if (booking == null)
+            if (booking == null) // Check if no booking was found
             {
-                return NotFound();      // Return 404 if booking not found
+                return NotFound(); // Return HTTP 404 Not Found if the booking does not exist
             }
 
-            return booking;             // Return found booking
+            return booking; // Return the booking object with HTTP 200 OK
         }
+
 
         // POST: api/Bookings
         [HttpPost]
