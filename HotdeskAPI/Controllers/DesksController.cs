@@ -9,24 +9,21 @@ using Microsoft.EntityFrameworkCore; // Provides Entity Framework Core ORM capab
 using Hotdesk.Components.Models; // Imports application-specific models (e.g., Desk)
 using HotdeskAPI.Data; // Imports the database context for Hotdesk API
 
-// Define the namespace for this controller
-namespace HotdeskAPI.Controllers
-{
-    // Set the route for this controller to "api/[controller]" (in this case, api/Desks)
-    [Route("api/[controller]")]
-    // Mark this class as an API controller for automatic model validation and JSON formatting
-    [ApiController]
-    // Define the controller class named DesksController that inherits from ControllerBase
-    public class DesksController : ControllerBase
-    {
-        // Declare a private read-only field for the database context
-        private readonly HotdeskAPIContext _context;
 
-        // Constructor that receives the database context through dependency injection
-        public DesksController(HotdeskAPIContext context)
+namespace HotdeskAPI.Controllers // Define the namespace for this controller
+{
+    
+    [Route("api/[controller]")] // Set the route for this controller to "api/[controller]" (in this case, api/Desks) 
+    [ApiController] // Mark this class as an API controller for automatic model validation and JSON formatting
+    public class DesksController : ControllerBase // Define the controller class named DesksController that inherits from ControllerBase
+    {
+        
+        private readonly HotdeskAPIContext _context; // Declare a private read-only field for the database context
+
+        
+        public DesksController(HotdeskAPIContext context) // Constructor that receives the database context through dependency injection
         {
-            // Assign the injected context to the private field
-            _context = context;
+            _context = context; // Assign the injected context to the private field
         }
 
         // HTTP GET endpoint to retrieve all desk records
@@ -48,12 +45,12 @@ namespace HotdeskAPI.Controllers
                 return NotFound(new { Message = "Desk not found." });
 
             // Define acceptable date formats
-            string[] formats = { "dd/MM/yyyy", "yyyy/MM/dd", "yyyy-MM-dd" };
+            string[] formats = { "dd/MM/yyyy" };
             // Try to parse the input date using one of the formats
             if (!DateTime.TryParseExact(date, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime parsedDate))
             {
                 // Return 400 Bad Request if date format is invalid
-                return BadRequest(new { Message = "Invalid date format. Please use dd/MM/yyyy or yyyy/MM/dd." });
+                return BadRequest(new { Message = "Invalid date format. Please use dd/MM/yyyy." });
             }
 
             // Check if a booking exists for the given desk and date
