@@ -104,4 +104,85 @@ Hotdesk Booking is a web application designed to facilitate the booking of hot d
 | public DateTime BookingDate { get; set; } | Stores the date and time when the booking is scheduled to occur. |
 | public string DurationType { get; set; } = string.Empty; | Stores the duration type of the booking (e.g., "daily"). |
 
+## Controllers
+
+### BookingController.cs
+This controller handles booking-related operations such as creating, retrieving, updating, and deleting bookings.
+Here are some key methods and attributes used in the BookingController:
+
+| Code line        | Function description           |
+|---------------|-----------------------|
+| public class BookingController : ControllerBase | Defines the BookingController class, inheriting from ControllerBase. |
+| private readonly HotdeskContext _context; | Declares a private field for the database context. |
+
+[HttpGet]
+
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpGet] | Attribute that indicates this method handles GET requests. |
+| public async Task<ActionResult<IEnumerable<Booking>>> GetBookings() | Retrieves all bookings from the database. Returns a list of Booking objects. |\
+| _context.Booking | Refers to the Bookings table in the database through Entity Framework. |
+| .Include(b => b.Desk) | Eager loads the related Desk entity for each booking |
+| .ToListAsync() | Asynchronously retrieves the list of bookings from the database. |
+
+[HttpGet("{id}")] – Get Booking by ID
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpGet("{id}")] | Attribute that indicates this method handles GET requests with a specific booking ID. |
+| public async Task<ActionResult<Booking>> GetBooking(int id) | Retrieves a specific booking by its ID. Returns a Booking object if found, or NotFound if not. |
+| var booking = await _context.Booking.Include(b => b.Desk).FirstOrDefaultAsync(b => b.BookingId == id); | Queries the booking by ID and includes its related Desk data |
+| if (booking == null) | Checks if the booking exists; if not, returns NotFound. |
+| return booking; | Returns the found booking. |
+
+[HttpPost] – Create Booking
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpPost] | Attribute that indicates this method handles POST requests for creating a new booking. |
+| public async Task<ActionResult<Booking>> PostBooking(Booking booking) | Creates a new booking in the database. |
+| if (string.IsNullOrWhiteSpace(booking.UserName)) | Validates that the UserName field is not empty or just whitespace |
+| return BadRequest(new { Message = "UserName is required." }); | Returns 400 Bad Request with a message if UserName is invalid |
+| var user = await _context.User.FirstOrDefaultAsync(u => u.UserName == booking.UserName); | Searches the database for a user with the given UserName |
+| if (user == null) | Checks if the user exists; if not, returns NotFound. |
+| return BadRequest(new { Message = "UserName does not exist. Please register the user first." }); | Returns 400 Bad Request with a message if the user does not exist |
+| var desk = await _context.Desk.FirstOrDefaultAsync(d => d.DeskId == booking.DeskId); | Searches for the desk by DeskId |
+| _context.Booking.Add(booking); | Adds the new booking to the database context |
+| await _context.SaveChangesAsync(); | Asynchronously saves changes to the database |
+| return CreatedAtAction(nameof(GetBooking), new { id = booking.BookingId }, booking); | Returns 201 Created with the location of the new booking and the booking data |
+
+[HttpPut("{id}")] – Update Booking
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpPut("{id}")] | Attribute that indicates this method handles PUT requests for updating an existing booking by ID. |
+| public async Task<IActionResult> PutBooking(int id, Booking booking) | Updates an existing booking in the database. |
+| if (id != booking.BookingId) | Checks if the provided ID matches the booking ID; if not, returns BadRequest. |
+| context.Entry(booking).State = EntityState.Modified; | Marks the booking entity as modified in the context |
+| try { await _context.SaveChangesAsync(); } | Attempts to save changes to the database asynchronously. |
+| catch (DbUpdateConcurrencyException) | Catches concurrency exceptions if the booking was modified by another user. |
+| if (!BookingExists(id)) | Checks if the booking exists; if not, returns NotFound. |
+| return NoContent(); | Returns 204 No Content if the update was successful. |
+
+[HttpDelete("{id}")] – Delete Booking
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpDelete("{id}")] | Attribute that indicates this method handles DELETE requests for deleting a booking by ID. |
+| public async Task<IActionResult> DeleteBooking(int id) | Deletes a booking from the database by its ID. |
+| var booking = await _context.Booking.FindAsync(id); | Searches for the booking by ID |
+| if (booking == null) | Checks if the booking exists; if not, returns NotFound. |	
+| _context.Booking.Remove(booking); | Removes the booking from the database context |
+| await _context.SaveChangesAsync(); | Asynchronously saves changes to the database |
+| return NoContent(); | Returns 204 No Content if the deletion was successful. |
+
+### DeskController.cs
+This controller handles desk-related operations such as retrieving available desks, creating new desks, and updating desk information.
+| Code line        | Function description           |
+|---------------|-----------------------|
+| public class DeskController : ControllerBase | Defines the DeskController class, inheriting from ControllerBase. |
+| private readonly HotdeskContext _context; | Declares a private field for the database context. |
+
+| [HttpGet] | Attribute that indicates this method handles GET requests. |
+
+
+
+
+
 
