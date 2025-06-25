@@ -67,5 +67,41 @@ Hotdesk Booking is a web application designed to facilitate the booking of hot d
 | Code line        | Function description           |
 |---------------|-----------------------|
 | public class Desk | Defines the Desk class    |
-| [DatabaseGenerated(DatabaseGeneratedOption.Identity)] | Entity Framework auto-generate this field |
+| [DatabaseGenerated(DatabaseGeneratedOption.None)] | Prevents EF Core from auto-generating DeskId; it must be manually assigned. |
 | public int DeskId { get; set; } | Desk ID - the unique ID for each desk.         |
+| public string Name { get; set; } = string.Empty; | Stores the name of the desk.         |
+| public string Location { get; set; } = string.Empty; | Stores the location of the desk.         |
+| public bool HasMonitor { get; set; } | Indicates whether the desk includes a monitor. |
+| public bool IsAvailable { get; set; } = true; | Boolean flag to indicate if the desk is available for booking.         |
+| public string Description { get; set; } = string.Empty; | Stores a description of the desk.         |
+| public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>(); | Navigation property to the collection of bookings associated with the desk.         |
+
+### User Model: User.cs
+| Code line        | Function description           |
+|---------------|-----------------------|
+| namespace HotdeskAPI | Defines the namespace for the application    |
+| [Index(nameof(UserName), IsUnique = true)] | Adds a unique index on UserName column in DB. Prevents duplicates and improves query performance. |
+| [Index(nameof(PhoneNumber), IsUnique = true)] | Adds a unique index on PhoneNumber. |
+| [Index(nameof(Email), IsUnique = true)] | Adds a unique index on Email. |
+| public class User | Defines the User class    |
+| public Guid UserId { get; set; } = Guid.NewGuid(); | Declares a unique identifier for the user. Auto-generates a new GUID when a user is created. |
+| public string FullName { get; set; } = string.Empty; | Stores the user's full name. Initializes with empty string. |
+| public string UserName { get; set; } = string.Empty; | Stores the user's username (must be unique). |
+| [RegularExpression(@"^0\d{9}$", ErrorMessage = "Phone number must be in the format 0123456789.")] | Validates phone format: must start with 0 and contain exactly 10 digits. |
+| public string PhoneNumber { get; set; } = string.Empty; | Stores the user's phone number (must be unique). |
+| public string Email { get; set; } = string.Empty; | Stores the user's email address (must be unique). |
+
+### BookFinder Model: BookFinder.cs
+| Code line        | Function description           |
+|---------------|-----------------------|
+| public class BookFinder | Defines the BookFinder class    |
+| public int BookingId { get; set; } | Unique ID for the booking. Helps identify individual booking records. |
+| public string UserName { get; set; } = string.Empty; | Stores the username of the person who made the booking. |
+| public string UserId { get; set; } = string.Empty; | Stores the unique identifier of the user (can be a string version of a Guid). |
+| public string PhoneNumber { get; set; } = string.Empty; | Stores the user’s phone number for contact purposes. |
+| public string DeskName { get; set; } = string.Empty; | Stores the name of the desk that was booked. |
+| public string Location { get; set; } = string.Empty; | Stores the physical location of the desk (e.g., "Level 2, Room A"). |
+| public DateTime BookingDate { get; set; } | Stores the date and time when the booking is scheduled to occur. |
+| public string DurationType { get; set; } = string.Empty; | Stores the duration type of the booking (e.g., "daily"). |
+
+
