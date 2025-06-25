@@ -32,3 +32,40 @@ Hotdesk Booking is a web application designed to facilitate the booking of hot d
 |8.| using HotdeskAPI.data; | Import project namespoace for database contexrt |
 |9.| using HotdeskAPI.Models; | Import model classes   |
 |10.| using HotdeskAPI.component.Models; | Import other model classes, allowing to use the type directly |
+
+## Important Attributes
+
+### Attributes used in the application
+
+| Attribute Name | Description |
+|----------------|-------------|
+| [Key] | Specifies the property that is the primary key of an entity. |
+| [Required] | Indicates that a property must have a value. |
+|[MaxLength(x)] |	Optimizes storage and prevents oversized data. |
+| [ForeignKey] | Specifies a foreign key relationship between two entities. |
+| virtual | Indicates that a property or method can be overridden in a derived class. |
+| [JsonIgnore] |	Prevents circular reference issues in API responses. |
+
+## Data Models
+
+### Booking Model: Booking.cs
+
+| Code line        | Function description           | 
+|---------------|-----------------------|
+| public class Booking | Defines the Booking class    | 
+| [DatabaseGenerated(DatabaseGeneratedOption.Identity)] | Entity Framework auto-generate this field | 
+| public int BookingId { get; set; }     | Booking ID - the unique ID for each booking.         | 
+| public int DeskId { get; set; } |       Desk ID - the ID of the desk being booked.         |
+| public int UserName { get; set; } |       Stores the name of the user who made the booking.         |
+| public DateTime BookingDate { get; set; } | Stores the date when the booking takes place.         |
+| public string DurationType { get; set; } = string.Empty; | Stores how long the booking is for (e.g."daily").         |
+| public bool CheckedIn { get; set; } | Boolean flag to indicate if the user checked in.        |
+| public DateTime? CheckInTime { get; set; } | Stores the time when the user checked in.         |
+| public virtual Desk? Desk { get; set; } = null!; | Navigation property to the Desk entity.         |
+
+### Desk Model: Desk.cs
+| Code line        | Function description           |
+|---------------|-----------------------|
+| public class Desk | Defines the Desk class    |
+| [DatabaseGenerated(DatabaseGeneratedOption.Identity)] | Entity Framework auto-generate this field |
+| public int DeskId { get; set; } | Desk ID - the unique ID for each desk.         |
