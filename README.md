@@ -106,7 +106,7 @@ Hotdesk Booking is a web application designed to facilitate the booking of hot d
 
 ## Controllers
 
-### BookingController.cs
+### Bookings Controller: BookingController.cs
 This controller handles booking-related operations such as creating, retrieving, updating, and deleting bookings.
 Here are some key methods and attributes used in the BookingController:
 
@@ -172,14 +172,215 @@ Here are some key methods and attributes used in the BookingController:
 | await _context.SaveChangesAsync(); | Asynchronously saves changes to the database |
 | return NoContent(); | Returns 204 No Content if the deletion was successful. |
 
-### DeskController.cs
+### Desks Controller : DeskController.cs
 This controller handles desk-related operations such as retrieving available desks, creating new desks, and updating desk information.
 | Code line        | Function description           |
 |---------------|-----------------------|
 | public class DeskController : ControllerBase | Defines the DeskController class, inheriting from ControllerBase. |
 | private readonly HotdeskContext _context; | Declares a private field for the database context. |
 
+[HttpGet]- Attribute that indicates this method handles GET requests. 
+| Code line        | Function description           |
+|---------------|-----------------------|
 | [HttpGet] | Attribute that indicates this method handles GET requests. |
+| public async Task<ActionResult<IEnumerable<Desk>>> GetDesks() | Retrieves all desks from the database. Returns a list of Desk objects. |
+|return await _context.Desk.ToListAsync(); | Asynchronously retrieves the list of desks from the database. |
+| _context.Desk | Refers to the Desks table in the database through Entity Framework. |
+| .ToListAsync() | Asynchronously retrieves the list of desks from the database. |
+
+[HttpGet("{id}/availability")] - Get Desk Availability by ID
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpGet("{id}/availability")] | Attribute that indicates this method handles GET requests for checking desk availability by ID. |
+| public async Task<ActionResult<bool>> GetDeskAvailability(int id) | Checks if a specific desk is available for booking. Returns true if available, false otherwise. |
+| var desk = await _context.Desk.FindAsync(id); | Searches for the desk by ID |
+| if (desk == null) | Checks if the desk exists; if not, returns NotFound. |
+| return NotFound(); | Returns 404 Not Found if the desk does not exist. |
+| string[] formats = { "dd/MM/yyyy" }; | Defines the date format for parsing. |
+| if (!DateTime.TryParseExact(date, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate)) | Validates the date format; if invalid, returns BadRequest. |
+| bool isBooked = await _context.Booking  .AnyAsync(b => b.DeskId == id && b.BookingDate.Date == parsedDate.Date); | Checks if there are any bookings for the desk on the specified date. |
+| return Ok(!isBooked); | Returns true if the desk is available, false if it is booked. |
+
+[HttpPost] – Create Desk
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpPost] | Attribute that indicates this method handles POST requests for creating a new desk. |
+| public async Task<ActionResult<Desk>> PostDesk(Desk desk) | Creates a new desk in the database. |
+| if (!ModelState.IsValid) | Checks if the model state is valid; if not, returns BadRequest. |
+| if (DeskExists(desk.DeskId)) | Checks if a desk with the same ID already exists; if so, returns Conflict. |
+| using var transaction = await _context.Database.BeginTransactionAsync(); | Starts a database transaction to ensure atomicity. |
+| _context.Desk.Add(desk); | Adds the new desk to the database context. |
+| await _context.SaveChangesAsync(); | Asynchronously saves changes to the database. |
+| await transaction.CommitAsync(); | Commits the transaction if all operations succeed. |
+| return CreatedAtAction(nameof(GetDesk), new { id = desk.DeskId }, desk); | Returns 201 Created with the location of the new desk and the desk data. |
+| catch (Exception ex) | Catches any exceptions that occur during the process. |
+
+[HttpPut] – Update Desk
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpPut("{id}")] | Attribute that indicates this method handles PUT requests for updating an existing desk by ID. |
+| public async Task<IActionResult> PutDesk(int id, Desk desk) | Updates an existing desk in the database. |
+| if (!ModelState.IsValid) | Checks if the model state is valid; if not, returns BadRequest. |
+| if (id != desk.DeskId) | Checks if the provided ID matches the desk ID; if not, returns BadRequest. |
+| _context.Entry(desk).State = EntityState.Modified; | Marks the desk entity as modified in the context. |
+| using var transaction = await _context.Database.BeginTransactionAsync(); | Starts a database transaction to ensure atomicity. |
+| _context.Entry(desk).State = EntityState.Modified; | Marks the desk entity as modified in the context. |
+| await _context.SaveChangesAsync(); | Asynchronously saves changes to the database. |
+| await transaction.CommitAsync(); | Commits the transaction if all operations succeed. |
+| catch (DbUpdateConcurrencyException) | Catches concurrency exceptions if the desk was modified by another user. |
+| if (!DeskExists(id)) | Checks if the desk exists; if not, returns NotFound. |
+| catch (Exception ex) | Catches any exceptions that occur during the process. |
+
+[HttpDelete("{id}")] – Delete Desk
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpDelete("{id}")] | Attribute that indicates this method handles DELETE requests for deleting a desk by ID. |
+| public async Task<IActionResult> DeleteDesk(int id) | Deletes a desk from the database by its ID. |
+| var desk = await _context.Desk.FindAsync(id); | Searches for the desk by ID. |
+| if (desk == null) | Checks if the desk exists; if not, returns NotFound. |
+| _context.Desk.Remove(desk); | Removes the desk from the database context. |
+| await _context.SaveChangesAsync(); | Asynchronously saves changes to the database. |
+| return NoContent(); | Returns 204 No Content if the deletion was successful. |
+
+
+Helper Methods
+| Code line        | Function description           |
+|---------------|-----------------------|
+| private bool DeskExists(int id) | Checks if a desk with the specified ID exists in the database. Returns true if it exists, false otherwise. |
+| return _context.Desk.Any(e => e.DeskId == id); | Uses LINQ to check if any desk matches the given ID. |
+
+### Users Controller : UserController.cs
+
+This controller handles user-related operations such as creating new users, retrieving user information, and updating user profiles.
+
+| Code line        | Function description           |
+|---------------|-----------------------|
+| public class UserController : ControllerBase | Defines the UserController class, inheriting from ControllerBase. |
+| private readonly HotdeskContext _context; | Declares a private field for the database context. |
+
+[HttpGet] - Attribute that indicates this method handles GET requests. 
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpGet] | Attribute that indicates this method handles GET requests. |
+| public async Task<ActionResult<IEnumerable<User>>> GetUsers() | Retrieves all users from the database. Returns a list of User objects. |
+| return await _context.User.ToListAsync(); | Asynchronously retrieves the list of users from the database. |
+
+[HttpGet(id)] - Get User by ID
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpGet("{id}")] | Attribute that indicates this method handles GET requests for a specific user by ID. |
+| public async Task<ActionResult<User>> GetUser(Guid id) | Retrieves a specific user by their ID. Returns a User object if found, or NotFound if not. |
+| var user = await _context.User.FindAsync(id); | Searches for the user by ID. |
+| if (user == null) | Checks if the user exists; if not, returns NotFound. |
+| return user; | Returns the found user. |	
+| return NotFound(); | Returns 404 Not Found if the user does not exist. |
+
+[HttpPost] – Create User
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpPost] | Attribute that indicates this method handles POST requests for creating a new user. |
+| public async Task<ActionResult<User>> PostUser(User user) | Creates a new user in the database. |
+| if (string.IsNullOrWhiteSpace(user.FullName)) | Checks if the FullName field is not empty or just whitespace. |
+| return BadRequest(new { Message = "FullName is required." }); | Returns 400 Bad Request with a message if FullName is invalid. |
+| if (string.IsNullOrWhiteSpace(user.UserName)) | Checks if the UserName field is not empty or just whitespace. |
+| return BadRequest(new { Message = "UserName is required." }); | Returns 400 Bad Request with a message if UserName is invalid. |
+| if (string.IsNullOrWhiteSpace(user.PhoneNumber)) | Checks if the PhoneNumber field is not empty or just whitespace. |
+| return BadRequest(new { Message = "PhoneNumber is required." }); | Returns 400 Bad Request with a message if PhoneNumber is invalid. |
+| if (string.IsNullOrWhiteSpace(user.Email)) | Checks if the Email field is not empty or just whitespace. |
+| return BadRequest(new { Message = "Email is required." }); | Returns 400 Bad Request with a message if Email is invalid. |
+| var existingUser = await _context.User.FirstOrDefaultAsync(u => u.UserName == user.UserName); | Searches the database for a user with the given UserName. |
+| if (existingUser != null) | Checks if a user with the same UserName already exists; if so, returns Conflict. |
+| return Conflict(new { Message = "UserName already exists." }); | Returns 409 Conflict with a message if UserName already exists. |
+| if (_context.User.Any(u => u.PhoneNumber == user.PhoneNumber)) | Checks if a user with the same PhoneNumber already exists |
+| return Conflict(new { Message = "PhoneNumber already exists." }); | Returns 409 Conflict with a message if PhoneNumber already exists. |
+| if (_context.User.Any(u => u.Email == user.Email)) | Checks if a user with the same Email already exists |
+| return Conflict(new { Message = "Email already exists." }); | Returns 409 Conflict with a message if Email already exists. |
+| using var transaction = await _context.Database.BeginTransactionAsync(); | Starts a database transaction to ensure atomicity. |
+| _context.User.Add(user); | Adds the new user to the database context. |
+| await _context.SaveChangesAsync(); | Asynchronously saves changes to the database. |
+| await transaction.CommitAsync(); | Commits the transaction if all operations succeed. |
+| return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user); | Returns 201 Created with the location of the new user and the user data. |
+| catch (Exception ex) | Catches any exceptions that occur during the process. |
+| await transaction.RollbackAsync(); | Rolls back the transaction if an error occurs. |
+| if (await _context.User.AnyAsync(u => u.UserName == user.UserName)) | Checks if a user with the same UserName already exists; if so, returns Conflict. |
+| return Conflict(new { Message = "UserName already exists." }); | Returns 409 Conflict with a message if UserName already exists. |
+| if (await _context.User.AnyAsync(u => u.PhoneNumber == user.PhoneNumber)) | Checks if a user with the same PhoneNumber already exists |
+| return Conflict(new { Message = "PhoneNumber already exists." }); | Returns 409 Conflict with a message if PhoneNumber already exists. |
+| if (await _context.User.AnyAsync(u => u.Email == user.Email)) | Checks if a user with the same Email already exists |
+| return Conflict(new { Message = "Email already exists." }); | Returns 409 Conflict with a message if Email already exists. |
+| return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred while creating the user." }); | Returns 500 Internal Server Error with a message if an error occurs. |
+
+[HttpDelete("{id}")] – Delete User
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpDelete("{id}")] | Attribute that indicates this method handles DELETE requests for deleting a user by ID. |
+| public async Task<IActionResult> DeleteUser(Guid id) | Deletes a user from the database by their ID. |
+| var user = await _context.User.FindAsync(id); | Searches for the user by ID. |
+| if (user == null) | Checks if the user exists; if not, returns NotFound. |
+| _context.User.Remove(user); | Removes the user from the database context. |
+| await _context.SaveChangesAsync(); | Asynchronously saves changes to the database. |
+| return NoContent(); | Returns 204 No Content if the deletion was successful. |
+
+### BookFinder : BookFinderController.cs
+This controller handles operations related to finding bookings based on user input, such as searching for bookings by username or date.
+| Code line        | Function description           |
+|---------------|-----------------------|
+| public class BookFinderController : ControllerBase | Defines the BookFinderController class, inheriting from ControllerBase. |
+| private readonly HotdeskContext _context; | Declares a private field for the database context. |
+| public BookFinderController(HotdeskContext context) | Constructor that initializes the controller with the database context. |
+| _context = context; | Assigns the provided context to the private field. |
+
+[HttpGet] - Attribute that indicates this method handles GET requests. 
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpGet] | Attribute that indicates this method handles GET requests. |
+| public async Task<ActionResult<IEnumerable<BookFinder>>> GetBookings() | Retrieves all bookings from the database. Returns a list of BookFinder objects. |
+| var result = await (from b in _context.Booking)	| 	| 
+| join u in _context.User on b.UserName equals u.UserName | Joins the Booking and User tables based on UserName. |
+| join d in _context.Desk on b.DeskId equals d.DeskId | Joins the Booking and Desk tables based on DeskId. |
+| select new BookFinder | Projects the result into a BookFinder object. |
+| { BookingId = b.BookingId, UserName = u.UserName, UserId = u.UserId.ToString(), PhoneNumber = u.PhoneNumber, DeskName = d.Name, Location = d.Location, BookingDate = b.BookingDate, DurationType = b.DurationType } | Maps the properties from Booking, User, and Desk to BookFinder. |
+| return Ok(result); | Returns the result as an OK response. |
+
+[HttpGet by id] - Get Booking by ID
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpGet("{id}")] | Attribute that indicates this method handles GET requests for a specific booking by ID. |
+|  public async Task<ActionResult<IEnumerable<BookFinder>>> GetBookFinder(string id, [FromQuery] string searchBy) | Retrieves bookings based on the search criteria. |
+| IQueryable<Hotdesk.Models.Booking> query = _context.Booking; | Initializes a query for the Booking table. |
+| if (searchBy?.ToLower() == "desk" && int.TryParse(id, out int deskId)) | Checks if the search criteria is "desk" and tries to parse the ID as an integer. |
+| query = query.Where(b => b.DeskId == deskId); | Filters bookings by DeskId if the search criteria is "desk". |
+| else if (searchBy?.ToLower() == "username") | Checks if the search criteria is "username". |
+| query = query.Where(b => b.UserName == id); | Filters bookings by UserName if the search criteria is "username". |
+| else if (searchBy?.ToLower() == "date" && DateTime.TryParse(id, out DateTime date)) | Checks if the search criteria is "date" and tries to parse the ID as a DateTime. |
+| query = query.Where(b => b.BookingDate.Date == date.Date); | Filters bookings by BookingDate if the search criteria is "date". |
+| return BadRequest(new { Message = "Invalid search criteria. Use 'desk', 'username', or 'date'." }); | Returns 400 Bad Request if the search criteria is invalid. |
+| var result = await (from b in query | Continues the query to join with User and Desk tables. |
+| join u in _context.User on b.UserName equals u.UserName | Joins the Booking and User tables based on UserName. |
+| join d in _context.Desk on b.DeskId equals d.DeskId | Joins the Booking and Desk tables based on DeskId. |
+| select new BookFinder | Projects the result into a BookFinder object. |
+| { BookingId = b.BookingId, UserName = u.UserName, UserId = u.UserId.ToString(), PhoneNumber = u.PhoneNumber, DeskName = d.Name, Location = d.Location, BookingDate = b.BookingDate, DurationType = b.DurationType } | Maps the properties from Booking, User, and Desk to BookFinder. |
+| if (results.Count() == 0) | Checks if no results were found. |)
+| return Ok(result); | Returns the result as an OK response. |
+
+[HttpDelete] - Delete Booking
+| Code line        | Function description           |
+|---------------|-----------------------|
+| [HttpDelete("{id}")] | Attribute that indicates this method handles DELETE requests for deleting a booking by ID. |
+| public async Task<IActionResult> DeleteBooking(int id) | Deletes a booking from the database by its ID. |
+| var booking = await _context.Booking.FindAsync(bookingId); | Searches for the booking by ID. |
+| if (booking == null) | Checks if the booking exists; if not, returns NotFound. |
+| return NotFound(); | Returns 404 Not Found if the booking does not exist. |
+| _context.Booking.Remove(booking); | Removes the booking from the database context. |
+| await _context.SaveChangesAsync(); | Asynchronously saves changes to the database. |
+| return NoContent(); | Returns 204 No Content if the deletion was successful. |
+
+
+
+
+
+
+
 
 
 
