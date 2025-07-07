@@ -1,0 +1,246 @@
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * The content below * * * * * * * * * * * -->
+<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
+<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * Delete the template below * * * * * * * * * -->
+<!-- * * * * * * * to get started with your project! * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+
+<div class="blazor-layout">
+  <header class="top-navbar">
+    <span class="navbar-brand">Hotdesk Booking</span>
+  </header>
+  <div class="main-area">
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Menu</span>
+      </div>
+      <ul>
+        <li><a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><span class="oi oi-home"></span> Home</a></li>
+        <li><a routerLink="/bookings" routerLinkActive="active"><span class="oi oi-calendar"></span> Book a Desk</a></li>
+        <li><a routerLink="/desks" routerLinkActive="active"><span class="oi oi-list"></span> View Desks</a></li>
+        <li><a routerLink="/profile" routerLinkActive="active"><span class="oi oi-person"></span> My Profile</a></li>
+        <li><a routerLink="/login" routerLinkActive="active"><span class="oi oi-account-login"></span> Sign In</a></li>
+      </ul>
+    </nav>
+    <main class="content-area">
+      <section class="welcome">
+        <h1>Welcome to Hotdesk Booking!</h1>
+        <p>Book your office desk easily and manage your reservations.</p>
+      </section>
+      <section class="features">
+        <h2>Features</h2>
+        <ul>
+          <li><strong>Desk Booking:</strong> Book a desk for a specific day.</li>
+          <li><strong>Availability Check:</strong> See which desks are available in real-time.</li>
+          <li><strong>Desk Listing:</strong> Admins can manage and list all desks in the office.</li>
+          <li><strong>User Profile:</strong> Create your profile and view your booking history.</li>
+          <li><strong>Book Finder:</strong> Search and filter bookings by user, desk, location, date, and time.</li>
+          <li><strong>Sign In:</strong> Secure login for users and administrators.</li>
+        </ul>
+      </section>
+      <nav class="quick-links">
+        <a routerLink="/bookings" class="btn btn-primary">Book a Desk</a>
+        <a routerLink="/desks" class="btn btn-secondary">View Desks</a>
+        <a routerLink="/profile" class="btn btn-info">My Profile</a>
+        <a routerLink="/login" class="btn btn-success">Sign In</a>
+      </nav>
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+
+<style>
+  html, body {
+    font-family: 'Futura' ;
+  }
+
+  .blazor-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f5f5f5;
+  }
+
+  .top-navbar {
+    background: #343a40;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    font-family: 'Futura', 'Segoe UI', Arial, sans-serif;
+  }
+
+  .main-area {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .sidebar {
+    width: 220px;
+    background: #232946;
+    color: #fff;
+    padding: 2rem 1rem 1rem 1rem;
+    min-height: 100vh;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    font-family: 'Futura', 'Segoe UI', Arial, sans-serif;
+  }
+
+  .sidebar-header {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .sidebar-title {
+    font-size: 1.2rem;
+    color: #eebbc3;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .sidebar li {
+    margin-bottom: 1.2rem;
+  }
+
+  .sidebar a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.08rem;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: block;
+    transition: background 0.2s;
+    font-family: 'Futura', 'Segoe UI', Arial, sans-serif;
+  }
+
+    .sidebar a.active,
+    .sidebar a:hover {
+      background: #eebbc3;
+      color: #232946;
+    }
+
+  .content-area {
+    flex: 1;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 32px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    text-align: center;
+    min-width: 0;
+    font-family: 'Futura', 'Segoe UI', Arial, sans-serif;
+  }
+
+  .welcome h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .welcome p {
+    color: #555;
+    margin-bottom: 2rem;
+  }
+
+  .features ul {
+    text-align: left;
+    margin: 0 auto 24px auto;
+    max-width: 500px;
+    padding-left: 1.2em;
+  }
+
+  .features h2 {
+    margin-bottom: 0.5em;
+  }
+
+  .quick-links {
+    margin-top: 32px;
+  }
+
+    .quick-links .btn {
+      margin: 0 8px 8px 0;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 5px;
+      color: #fff;
+      display: inline-block;
+      font-weight: 500;
+      font-family: 'Futura', 'Segoe UI', Arial, sans-serif;
+    }
+
+  .btn-primary {
+    background: #007bff;
+  }
+
+  .btn-secondary {
+    background: #6c757d;
+  }
+
+  .btn-info {
+    background: #17a2b8;
+  }
+
+  .btn-success {
+    background: #28a745;
+  }
+
+  @media (max-width: 900px) {
+    .main-area {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      min-height: unset;
+      box-shadow: none;
+      flex-direction: row;
+      align-items: center;
+      padding: 12px 0;
+      justify-content: center;
+    }
+
+      .sidebar ul {
+        display: flex;
+        flex-direction: row;
+        gap: 1.2rem;
+      }
+
+      .sidebar li {
+        margin-bottom: 0;
+      }
+
+    .content-area {
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      max-width: 100%;
+    }
+  }
+</style>
+
+<router-outlet />
+
+
+
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * The content above * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * * -->
+<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * End of Placeholder  * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+
+
+
