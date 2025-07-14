@@ -5,17 +5,7 @@
   "projects": {
     "hotdesk-ui": {
       "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "standalone": false
-        },
-        "@schematics/angular:directive": {
-          "standalone": false
-        },
-        "@schematics/angular:pipe": {
-          "standalone": false
-        }
-      },
+      "schematics": {},
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -36,7 +26,12 @@
             ],
             "styles": [
               "src/styles.css"
-            ]
+            ],
+            "server": "src/main.server.ts",
+            "outputMode": "server",
+            "ssr": {
+              "entry": "src/server.ts"
+            }
           },
           "configurations": {
             "production": {
@@ -72,10 +67,7 @@
               "buildTarget": "hotdesk-ui:build:development"
             }
           },
-          "defaultConfiguration": "development",
-          "options": {
-            "port": 64941
-          }
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular/build:extract-i18n"
@@ -96,14 +88,13 @@
             ],
             "styles": [
               "src/styles.css"
-            ],
-            "karmaConfig": "karma.conf.js"
+            ]
           }
         }
       }
     }
   },
   "cli": {
-    "analytics": "b93d7733-545e-40e1-85a3-0d129f4ece28"
+    "analytics": false
   }
 }
