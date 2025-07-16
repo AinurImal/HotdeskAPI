@@ -1,1 +1,19 @@
 <p>booking works!</p>
+
+<div class="home-layout">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title"> Hotdesk</span>
+    </div>
+    <ul>
+      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Hotdesk</a></li>
+      <li><a routerLink="/bookings" routerLinkActive="active">Booking</a></li>
+      <li><a routerLink="/desks" routerLinkActive="active">Desk</a></li>
+      <li><a routerLink="/user" routerLinkActive="active">User</a></li>
+    </ul>
+  </nav>
+  <main class="content-area">
+    <h1>Welcome to Booking Page!</h1>
+    <p class="cyan">booking works!</p>
+  </main>
+</div>
