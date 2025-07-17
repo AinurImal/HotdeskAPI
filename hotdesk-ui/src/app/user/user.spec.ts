@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { User } from './user';
 
 describe('User', () => {
@@ -10,7 +9,7 @@ describe('User', () => {
     await TestBed.configureTestingModule({
       imports: [User]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(User);
     component = fixture.componentInstance;
@@ -21,3 +20,4 @@ describe('User', () => {
     expect(component).toBeTruthy();
   });
 });
+

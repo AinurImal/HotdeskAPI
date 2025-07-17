@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-desk',
-  imports: [],
+  standalone: true,
+  imports: [RouterModule],
   templateUrl: './desk.html',
   styleUrl: './desk.css'
 })
-export class Desk {
+export class Desk { }
 
-}
