@@ -4,7 +4,6 @@
   background: #f5f5f5;
 }
 
-/* Sidebar styles */
 .sidebar {
   width: 220px;
   background: #232946;
@@ -54,7 +53,6 @@
     color: #232946;
   }
 
-/* Content area styles */
 .content-area {
   flex: 1;
   padding: 32px;
