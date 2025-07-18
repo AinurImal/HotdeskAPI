@@ -9,3 +9,4 @@ import { RouterModule } from '@angular/router';
   styleUrl: './booking.css'
 })
 export class Booking { }
+
