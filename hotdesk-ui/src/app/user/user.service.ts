@@ -80,15 +80,46 @@ export class UserService {
     // Check if error is client-side (network, parsing, etc.)
     if (error.error instanceof ErrorEvent) {
       // Client-side error - network issues, parsing errors, etc.
-      errorMessage = `Client Error: ${error.error.message}`;
+      errorMessage = `Network Error: ${error.error.message}`;
     } else {
       // Server-side error - API returned error status code
-      errorMessage = `Server Error Code: ${error.status}\nMessage: ${error.message}`;
+      // Handle specific HTTP status codes with user-friendly messages
+      switch (error.status) {
+        case 409:
+          // Conflict - Usually means duplicate data (username, email, etc.)
+          errorMessage = 'Duplicate Entry: A user with this username or email already exists. Please use different values.';
+          break;
+        case 400:
+          // Bad Request - Validation errors
+          errorMessage = 'Invalid Data: Please check your input and try again.';
+          break;
+        case 404:
+          // Not Found - User doesn't exist
+          errorMessage = 'User Not Found: The requested user could not be found.';
+          break;
+        case 500:
+          // Internal Server Error
+          errorMessage = 'Server Error: Please try again later or contact support.';
+          break;
+        case 0:
+          // Network/CORS error
+          errorMessage = 'Connection Error: Unable to connect to the server. Please check your connection.';
+          break;
+        default:
+          // Generic server error with status code
+          errorMessage = `Server Error (${error.status}): ${error.message}`;
+      }
     }
     
-    // Log error to console for debugging purposes
-    console.error(errorMessage);
-    // Return observable that immediately emits an error
+    // Log technical error details to console for debugging purposes
+    console.error('API Error Details:', {
+      status: error.status,
+      message: error.message,
+      url: error.url,
+      error: error.error
+    });
+    
+    // Return observable that immediately emits an error with user-friendly message
     return throwError(() => errorMessage);
   }
 }

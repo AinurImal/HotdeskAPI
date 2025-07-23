@@ -221,16 +221,134 @@
   color: #6c757d;
 }
 
-.error-message {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 1rem;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
+/* Enhanced Error Message Styling */
+.error-container {
   margin: 1rem 0;
+}
+
+.error-message {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.error-content {
+  flex-grow: 1;
+}
+
+.error-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.error-content p {
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.error-suggestion {
+  font-style: italic;
+  opacity: 0.9;
+  font-size: 0.9rem !important;
+}
+
+.btn-clear {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.btn-clear:hover {
+  opacity: 1;
+}
+
+/* Duplicate Entry Error (409 Conflict) */
+.duplicate-error {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+.duplicate-error .btn-clear {
+  color: #856404;
+}
+
+.duplicate-error .btn-clear:hover {
+  background-color: #ffeaa7;
+}
+
+/* Validation Error (400 Bad Request) */
+.validation-error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.validation-error .btn-clear {
+  color: #721c24;
+}
+
+.validation-error .btn-clear:hover {
+  background-color: #f5c6cb;
+}
+
+/* Connection Error (0 Network Error) */
+.connection-error {
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+  color: #0c5460;
+}
+
+.connection-error .btn-clear {
+  color: #0c5460;
+}
+
+.connection-error .btn-clear:hover {
+  background-color: #bee5eb;
+}
+
+/* Generic Error */
+.generic-error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.generic-error .btn-clear {
+  color: #721c24;
+}
+
+.generic-error .btn-clear:hover {
+  background-color: #f5c6cb;
+}
+
+/* Animation for error messages */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .no-data {

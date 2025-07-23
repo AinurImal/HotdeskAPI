@@ -18,10 +18,51 @@
       <p>Loading...</p>
     </div>
 
-    <!-- Error message -->
-    <div *ngIf="errorMessage" class="error-message">
-      <p>{{ errorMessage }}</p>
-      <button (click)="errorMessage = ''" class="btn btn-sm">Clear</button>
+    <!-- Error message display with different styling for different error types -->
+    <div *ngIf="errorMessage" class="error-container">
+      <!-- Duplicate/Conflict Error (409) -->
+      <div *ngIf="errorMessage.includes('Duplicate Entry')" class="error-message duplicate-error">
+        <div class="error-icon">⚠️</div>
+        <div class="error-content">
+          <h4>Duplicate Information Detected</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please modify the username or email address and try again.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Validation Error (400) -->
+      <div *ngIf="errorMessage.includes('Invalid Data')" class="error-message validation-error">
+        <div class="error-icon">❌</div>
+        <div class="error-content">
+          <h4>Input Validation Failed</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please ensure all required fields are filled correctly.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Connection Error (0) -->
+      <div *ngIf="errorMessage.includes('Connection Error')" class="error-message connection-error">
+        <div class="error-icon">🔌</div>
+        <div class="error-content">
+          <h4>Connection Problem</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please check if the HotdeskAPI server is running.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Generic Error (for other cases) -->
+      <div *ngIf="!errorMessage.includes('Duplicate Entry') && !errorMessage.includes('Invalid Data') && !errorMessage.includes('Connection Error')" class="error-message generic-error">
+        <div class="error-icon">⚠️</div>
+        <div class="error-content">
+          <h4>Operation Failed</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please try again or contact support if the problem persists.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
     </div>
 
     <!-- Create User Form -->
