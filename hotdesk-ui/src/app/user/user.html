@@ -11,8 +11,215 @@
     </ul>
   </nav>
   <main class="content-area">
-    <h1>Welcome to User Page!</h1>
-    <p class="cyan">user works!</p>
+    <h1>User Management</h1>
+    
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading">
+      <p>Loading...</p>
+    </div>
+
+    <!-- Error message -->
+    <div *ngIf="errorMessage" class="error-message">
+      <p>{{ errorMessage }}</p>
+      <button (click)="errorMessage = ''" class="btn btn-sm">Clear</button>
+    </div>
+
+    <!-- Create User Form -->
+    <div class="user-form-section">
+      <h2>Add New User</h2>
+      <form (ngSubmit)="createUser()" #createForm="ngForm" class="user-form">
+        <div class="form-group">
+          <label for="newFullName">Full Name *:</label>
+          <input 
+            type="text" 
+            id="newFullName"
+            [(ngModel)]="newUser.fullName" 
+            name="newFullName"
+            required
+            placeholder="Enter user's full name"
+            class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="newUserName">Username *:</label>
+          <input 
+            type="text" 
+            id="newUserName"
+            [(ngModel)]="newUser.userName" 
+            name="newUserName"
+            required
+            placeholder="Enter username"
+            class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="newPhoneNumber">Phone Number *:</label>
+          <input 
+            type="tel" 
+            id="newPhoneNumber"
+            [(ngModel)]="newUser.phoneNumber" 
+            name="newPhoneNumber"
+            required
+            placeholder="Enter phone number"
+            class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="newEmail">Email Address *:</label>
+          <input 
+            type="email" 
+            id="newEmail"
+            [(ngModel)]="newUser.email" 
+            name="newEmail"
+            required
+            placeholder="Enter email address"
+            class="form-control">
+        </div>
+        
+        <button type="submit" [disabled]="!createForm.form.valid || isLoading" class="btn btn-primary">
+          Add User
+        </button>
+      </form>
+    </div>
+
+    <!-- Edit User Form -->
+    <div *ngIf="isEditing" class="user-form-section">
+      <h2>Edit User</h2>
+      <form (ngSubmit)="updateUser()" #editForm="ngForm" class="user-form">
+        <div class="form-group">
+          <label for="editFullName">Full Name *:</label>
+          <input 
+            type="text" 
+            id="editFullName"
+            [(ngModel)]="editUser.fullName" 
+            name="editFullName"
+            required
+            placeholder="Enter user's full name"
+            class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="editUserName">Username *:</label>
+          <input 
+            type="text" 
+            id="editUserName"
+            [(ngModel)]="editUser.userName" 
+            name="editUserName"
+            required
+            placeholder="Enter username"
+            class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="editPhoneNumber">Phone Number *:</label>
+          <input 
+            type="tel" 
+            id="editPhoneNumber"
+            [(ngModel)]="editUser.phoneNumber" 
+            name="editPhoneNumber"
+            required
+            placeholder="Enter phone number"
+            class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="editEmail">Email Address *:</label>
+          <input 
+            type="email" 
+            id="editEmail"
+            [(ngModel)]="editUser.email" 
+            name="editEmail"
+            required
+            placeholder="Enter email address"
+            class="form-control">
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" [disabled]="!editForm.form.valid || isLoading" class="btn btn-primary">
+            Update User
+          </button>
+          <button type="button" (click)="cancelEdit()" class="btn btn-secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Users List -->
+    <div class="users-section">
+      <div class="section-header">
+        <h2>Users List</h2>
+        <button (click)="loadUsers()" class="btn btn-secondary">Refresh</button>
+      </div>
+      
+      <div *ngIf="users.length === 0 && !isLoading" class="no-data">
+        <p>No users found. Add some users to get started!</p>
+      </div>
+
+      <div *ngIf="users.length > 0" class="users-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Full Name</th>
+              <th>Username</th>
+              <th>Phone Number</th>
+              <th>Email Address</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td class="user-id">{{ user.userId }}</td>
+              <td class="full-name">{{ user.fullName }}</td>
+              <td class="username">{{ user.userName }}</td>
+              <td class="phone-number">{{ user.phoneNumber }}</td>
+              <td class="email">{{ user.email }}</td>
+              <td class="actions">
+                <button (click)="getUserById(user.userId!)" class="btn btn-info btn-sm">View</button>
+                <button (click)="startEdit(user)" class="btn btn-warning btn-sm">Edit</button>
+                <button (click)="deleteUser(user.userId!)" class="btn btn-danger btn-sm">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Selected User Details -->
+    <div *ngIf="selectedUser" class="selected-user">
+      <h3>User Details</h3>
+      <div class="user-details">
+        <div class="detail-row">
+          <strong>User ID:</strong> 
+          <span class="user-id-display">{{ selectedUser.userId }}</span>
+        </div>
+        <div class="detail-row">
+          <strong>Full Name:</strong> 
+          <span class="full-name-display">{{ selectedUser.fullName }}</span>
+        </div>
+        <div class="detail-row">
+          <strong>Username:</strong> 
+          <span class="username-display">{{ selectedUser.userName }}</span>
+        </div>
+        <div class="detail-row">
+          <strong>Phone Number:</strong> 
+          <span class="phone-display">{{ selectedUser.phoneNumber }}</span>
+        </div>
+        <div class="detail-row">
+          <strong>Email Address:</strong> 
+          <span class="email-display">{{ selectedUser.email }}</span>
+        </div>
+        <div class="detail-row" *ngIf="selectedUser.createdDate">
+          <strong>Created Date:</strong> 
+          <span class="date-display">{{ selectedUser.createdDate | date:'medium' }}</span>
+        </div>
+        <div class="user-actions">
+          <button (click)="startEdit(selectedUser)" class="btn btn-warning btn-sm">Edit User</button>
+          <button (click)="selectedUser = null" class="btn btn-secondary btn-sm">Clear Selection</button>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
