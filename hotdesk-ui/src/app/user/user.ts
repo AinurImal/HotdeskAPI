@@ -55,7 +55,7 @@ export class UserComponent implements OnInit {
     this.loadUsers();
   }
 
-  // Load all users
+  // Load all users from the API
   loadUsers(): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -126,15 +126,34 @@ export class UserComponent implements OnInit {
     });
   }
 
-  // Delete user
+  // Delete user with enhanced validation and error handling
   deleteUser(id: string): void {
-    if (confirm('Are you sure you want to delete this user?')) {
+    // Validate that ID exists and is not empty
+    if (!id || id.trim() === '') {
+      this.errorMessage = 'Invalid Data: User ID is missing. Cannot delete user.';
+      return;
+    }
+
+    // Find the user to get their name for confirmation
+    const userToDelete = this.users.find(u => u.userId === id);
+    const userName = userToDelete ? userToDelete.fullName : 'this user';
+    
+    // Confirm deletion with user's name
+    if (confirm(`Are you sure you want to delete ${userName}?\n\nThis action cannot be undone.`)) {
       this.isLoading = true;
+      this.errorMessage = ''; // Clear any existing errors
+      
       this.userService.deleteUser(id).subscribe({
         next: () => {
+          // Successfully deleted - remove from local array
           this.users = this.users.filter(u => u.userId !== id);
           this.isLoading = false;
           this.errorMessage = '';
+          
+          // Clear selected user if it was the deleted one
+          if (this.selectedUser && this.selectedUser.userId === id) {
+            this.selectedUser = null;
+          }
         },
         error: (error) => {
           this.errorMessage = error;
@@ -144,12 +163,11 @@ export class UserComponent implements OnInit {
     }
   }
 
-  // Get user by ID (example of individual GET)
+  // Get user by ID to display details
   getUserById(id: string): void {
     this.userService.getUserById(id).subscribe({
       next: (user) => {
         this.selectedUser = user;
-        console.log('Selected user:', user);
       },
       error: (error) => {
         this.errorMessage = error;

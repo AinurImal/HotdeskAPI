@@ -182,6 +182,16 @@
   margin-bottom: 1rem;
 }
 
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.header-actions .btn {
+  margin-left: 0.5rem;
+}
+
 .users-table {
   overflow-x: auto;
 }

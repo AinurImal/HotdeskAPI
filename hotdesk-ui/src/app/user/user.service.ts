@@ -5,7 +5,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 // Import RxJS observables for asynchronous data handling
 import { Observable, throwError } from 'rxjs';
 // Import RxJS operator for error handling in observable streams
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 // Import TypeScript interfaces for type safety
 import { User, CreateUserRequest, UpdateUserRequest } from './user.model';
 // Import environment configuration for API URL
@@ -95,7 +95,7 @@ export class UserService {
           break;
         case 404:
           // Not Found - User doesn't exist
-          errorMessage = 'User Not Found: The requested user could not be found.';
+          errorMessage = 'User Not Found: The requested user could not be found. The user may have been already deleted or the ID is incorrect.';
           break;
         case 500:
           // Internal Server Error
@@ -103,7 +103,7 @@ export class UserService {
           break;
         case 0:
           // Network/CORS error
-          errorMessage = 'Connection Error: Unable to connect to the server. Please check your connection.';
+          errorMessage = 'Connection Error: Unable to connect to the server. Please check your connection and ensure the API server is running.';
           break;
         default:
           // Generic server error with status code
@@ -116,10 +116,32 @@ export class UserService {
       status: error.status,
       message: error.message,
       url: error.url,
-      error: error.error
+      error: error.error,
+      fullErrorObject: error
     });
     
     // Return observable that immediately emits an error with user-friendly message
     return throwError(() => errorMessage);
+  }
+
+  // Test method to directly test API without proxy (for debugging)
+  testDirectApiDelete(id: string): Observable<void> {
+    const directApiUrl = `http://localhost:5251/api/Users/${id}`;
+    console.log('UserService: Testing direct API DELETE to:', directApiUrl);
+    
+    return this.http.delete<void>(directApiUrl)
+      .pipe(
+        tap(() => {
+          console.log('UserService: Direct API DELETE successful for ID:', id);
+        }),
+        catchError((error) => {
+          console.error('UserService: Direct API DELETE failed:', {
+            id: id,
+            url: directApiUrl,
+            error: error
+          });
+          return this.handleError(error);
+        })
+      );
   }
 }

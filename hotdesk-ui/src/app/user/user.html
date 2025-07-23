@@ -190,7 +190,9 @@
     <div class="users-section">
       <div class="section-header">
         <h2>Users List</h2>
-        <button (click)="loadUsers()" class="btn btn-secondary">Refresh</button>
+        <div class="header-actions">
+          <button (click)="loadUsers()" class="btn btn-secondary">Refresh</button>
+        </div>
       </div>
       
       <div *ngIf="users.length === 0 && !isLoading" class="no-data">
@@ -217,9 +219,23 @@
               <td class="phone-number">{{ user.phoneNumber }}</td>
               <td class="email">{{ user.email }}</td>
               <td class="actions">
-                <button (click)="getUserById(user.userId!)" class="btn btn-info btn-sm">View</button>
-                <button (click)="startEdit(user)" class="btn btn-warning btn-sm">Edit</button>
-                <button (click)="deleteUser(user.userId!)" class="btn btn-danger btn-sm">Delete</button>
+                <!-- Only show buttons if userId exists -->
+                <button 
+                  *ngIf="user.userId" 
+                  (click)="getUserById(user.userId)" 
+                  class="btn btn-info btn-sm">View</button>
+                <button 
+                  *ngIf="user.userId" 
+                  (click)="startEdit(user)" 
+                  class="btn btn-warning btn-sm">Edit</button>
+                <button 
+                  *ngIf="user.userId" 
+                  (click)="deleteUser(user.userId)" 
+                  class="btn btn-danger btn-sm"
+                  [disabled]="isLoading">Delete</button>
+                
+                <!-- Show warning if no userId -->
+                <span *ngIf="!user.userId" class="text-warning">No ID Available</span>
               </td>
             </tr>
           </tbody>
