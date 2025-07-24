@@ -1,206 +1,237 @@
-<div class="desk-layout">
+<div class="home-layout">
   <nav class="sidebar">
     <div class="sidebar-header">
-      <span class="sidebar-title">Hotdesk</span>
+      <span class="sidebar-title"> Hotdesk</span>
     </div>
     <ul>
-      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a></li>
+      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Hotdesk</a></li>
       <li><a routerLink="/bookings" routerLinkActive="active">Booking</a></li>
       <li><a routerLink="/desks" routerLinkActive="active">Desk</a></li>
       <li><a routerLink="/user" routerLinkActive="active">User</a></li>
     </ul>
   </nav>
-  
   <main class="content-area">
-    <div class="desk-management">
-      <header class="header">
-        <h1>Desk Management</h1>
+    <h1>Desk Management</h1>
+    
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading">
+      <p>Loading...</p>
+    </div>
+
+    <!-- Error message display with different styling for different error types -->
+    <div *ngIf="errorMessage" class="error-container">
+      <!-- Duplicate/Conflict Error (409) -->
+      <div *ngIf="errorMessage.includes('Duplicate Entry')" class="error-message duplicate-error">
+        <div class="error-icon">⚠️</div>
+        <div class="error-content">
+          <h4>Duplicate Information Detected</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please modify the desk name or ID and try again.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Validation Error (400) -->
+      <div *ngIf="errorMessage.includes('Invalid Data')" class="error-message validation-error">
+        <div class="error-icon">❌</div>
+        <div class="error-content">
+          <h4>Input Validation Failed</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please ensure all required fields are filled correctly.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Connection Error (0) -->
+      <div *ngIf="errorMessage.includes('Connection Error')" class="error-message connection-error">
+        <div class="error-icon">🔌</div>
+        <div class="error-content">
+          <h4>Connection Problem</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please check if the HotdeskAPI server is running.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Generic Error (for other cases) -->
+      <div *ngIf="!errorMessage.includes('Duplicate Entry') && !errorMessage.includes('Invalid Data') && !errorMessage.includes('Connection Error')" class="error-message generic-error">
+        <div class="error-icon">⚠️</div>
+        <div class="error-content">
+          <h4>Operation Failed</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please try again or contact support if the problem persists.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+    </div>
+
+    <!-- Success message display -->
+    <div *ngIf="successMessage" class="success-message">
+      <div class="success-icon">✅</div>
+      <div class="success-content">
+        <p>{{ successMessage }}</p>
+      </div>
+      <button (click)="successMessage = ''" class="btn btn-sm btn-clear">×</button>
+    </div>
+
+    <!-- Create Desk Form -->
+    <div class="user-form-section">
+      <h2>{{ isEditMode ? 'Edit Desk' : 'Add New Desk' }}</h2>
+      <form [formGroup]="deskForm" (ngSubmit)="onSubmit()" class="user-form">
+        <div class="form-group">
+          <label for="deskId">Desk ID {{ isEditMode ? '' : '(Auto-generated if empty)' }}:</label>
+          <input 
+            type="number" 
+            id="deskId" 
+            formControlName="deskId"
+            [class.error]="isFieldInvalid('deskId')"
+            placeholder="Enter desk ID (optional for new desks)"
+            [readonly]="isEditMode"
+            class="form-control">
+          <div *ngIf="isFieldInvalid('deskId')" class="field-error">
+            {{ getFieldError('deskId') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="name">Desk Name *:</label>
+          <input 
+            type="text" 
+            id="name" 
+            formControlName="name"
+            [class.error]="isFieldInvalid('name')"
+            placeholder="Enter desk name (e.g., A1, B2, Desk-01)"
+            class="form-control">
+          <div *ngIf="isFieldInvalid('name')" class="field-error">
+            {{ getFieldError('name') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Location *:</label>
+          <input 
+            type="text" 
+            id="location" 
+            formControlName="location"
+            [class.error]="isFieldInvalid('location')"
+            placeholder="Desk location (e.g., PDSB, Main Office, Floor 2)"
+            class="form-control">
+          <div *ngIf="isFieldInvalid('location')" class="field-error">
+            {{ getFieldError('location') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              formControlName="isAvailable"
+            >
+            Available for booking
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              formControlName="hasMonitor"
+            >
+            Has Monitor
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description:</label>
+          <textarea 
+            id="description" 
+            formControlName="description"
+            placeholder="Additional notes about the desk (optional)"
+            rows="3"
+            class="form-control">
+          </textarea>
+        </div>
+
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="isLoading || !deskForm.valid">
+          {{ isLoading ? 'Processing...' : (isEditMode ? 'Update Desk' : 'Create Desk') }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Desks List -->
+    <div class="users-section">
+      <div class="section-header">
+        <h2>All Desks ({{ desks.length }})</h2>
         <div class="header-actions">
+          <button (click)="loadDesks()" class="btn btn-secondary" [disabled]="isLoading">
+            {{ isLoading ? 'Loading...' : 'Refresh' }}
+          </button>
           <button 
             type="button" 
-            class="btn btn-refresh" 
-            (click)="loadDesks()" 
+            class="btn btn-secondary"
+            (click)="resetForm()"
             [disabled]="isLoading">
-            {{ isLoading ? 'Loading...' : 'Refresh Desks' }}
+            {{ isEditMode ? 'Cancel Edit' : 'Clear Form' }}
           </button>
         </div>
-      </header>
-
-      <!-- Error and Success Messages -->
-      <div class="messages" *ngIf="errorMessage || successMessage">
-        <div *ngIf="errorMessage" class="error-message">
-          <strong>Error:</strong> {{ errorMessage }}
-        </div>
-        <div *ngIf="successMessage" class="success-message">
-          <strong>Success:</strong> {{ successMessage }}
-        </div>
+      </div>
+      
+      <div *ngIf="desks.length === 0 && !isLoading" class="no-data">
+        <p>No desks found. Create your first desk using the form above.</p>
       </div>
 
-      <!-- Desk Form -->
-      <section class="form-section">
-        <h2>{{ isEditMode ? 'Edit Desk' : 'Add New Desk' }}</h2>
-        
-        <form [formGroup]="deskForm" (ngSubmit)="onSubmit()" class="desk-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="deskId">Desk ID {{ isEditMode ? '' : '(Auto-generated if empty)' }}</label>
-              <input 
-                type="number" 
-                id="deskId" 
-                formControlName="deskId"
-                [class.error]="isFieldInvalid('deskId')"
-                placeholder="Enter desk ID (optional for new desks)"
-                [readonly]="isEditMode"
-              >
-              <div *ngIf="isFieldInvalid('deskId')" class="field-error">
-                {{ getFieldError('deskId') }}
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="name">Desk Name *</label>
-              <input 
-                type="text" 
-                id="name" 
-                formControlName="name"
-                [class.error]="isFieldInvalid('name')"
-                placeholder="Enter desk name (e.g., A1, B2, Desk-01)"
-              >
-              <div *ngIf="isFieldInvalid('name')" class="field-error">
-                {{ getFieldError('name') }}
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="location">Location *</label>
-              <input 
-                type="text" 
-                id="location" 
-                formControlName="location"
-                [class.error]="isFieldInvalid('location')"
-                placeholder="Desk location (e.g., PDSB, Main Office, Floor 2)"
-              >
-              <div *ngIf="isFieldInvalid('location')" class="field-error">
-                {{ getFieldError('location') }}
-              </div>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group checkbox-group">
-              <label class="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  formControlName="isAvailable"
-                >
-                Available for booking
-              </label>
-            </div>
-
-            <div class="form-group checkbox-group">
-              <label class="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  formControlName="hasMonitor"
-                >
-                Has Monitor
-              </label>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group full-width">
-              <label for="description">Description</label>
-              <textarea 
-                id="description" 
-                formControlName="description"
-                placeholder="Additional notes about the desk (optional)"
-                rows="3"
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button 
-              type="submit" 
-              class="btn btn-primary"
-              [disabled]="isLoading || !deskForm.valid">
-              {{ isLoading ? 'Processing...' : (isEditMode ? 'Update Desk' : 'Create Desk') }}
-            </button>
-            
-            <button 
-              type="button" 
-              class="btn btn-secondary"
-              (click)="resetForm()"
-              [disabled]="isLoading">
-              {{ isEditMode ? 'Cancel Edit' : 'Clear Form' }}
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <!-- Desks List -->
-      <section class="list-section">
-        <h2>All Desks ({{ desks.length }})</h2>
-        
-        <div *ngIf="isLoading && desks.length === 0" class="loading">
-          Loading desks...
-        </div>
-        
-        <div *ngIf="!isLoading && desks.length === 0" class="no-data">
-          No desks found. Create your first desk using the form above.
-        </div>
-        
-        <div *ngIf="desks.length > 0" class="desks-table-container">
-          <table class="desks-table">
-            <thead>
-              <tr>
-                <th>Desk ID</th>
-                <th>Desk Name</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Has Monitor</th>
-                <th>Description</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let desk of desks" [class.editing]="editingDeskId === desk.deskId">
-                <td class="desk-id">{{ desk.deskId }}</td>
-                <td class="desk-name">{{ desk.name }}</td>
-                <td>{{ desk.location }}</td>
-                <td>
-                  <span [class]="desk.isAvailable ? 'status-available' : 'status-unavailable'">
-                    {{ desk.isAvailable ? 'Available' : 'Unavailable' }}
-                  </span>
-                </td>
-                <td class="equipment">
-                  <span [class]="desk.hasMonitor ? 'equipment-item' : 'no-equipment'">
-                    {{ desk.hasMonitor ? 'Yes' : 'No' }}
-                  </span>
-                </td>
-                <td class="description">{{ desk.description || 'No description' }}</td>
-                <td class="actions">
-                  <button 
-                    type="button" 
-                    class="btn btn-edit"
-                    (click)="editDesk(desk)"
-                    [disabled]="isLoading">
-                    Edit
-                  </button>
-                  <button 
-                    type="button" 
-                    class="btn btn-delete"
-                    (click)="deleteDesk(desk)"
-                    [disabled]="isLoading">
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div *ngIf="desks.length > 0" class="users-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Desk ID</th>
+              <th>Desk Name</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Has Monitor</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let desk of desks" [class.editing]="editingDeskId === desk.deskId">
+              <td class="desk-id">{{ desk.deskId }}</td>
+              <td class="desk-name">{{ desk.name }}</td>
+              <td>{{ desk.location }}</td>
+              <td>
+                <span [class]="desk.isAvailable ? 'status-available' : 'status-unavailable'">
+                  {{ desk.isAvailable ? 'Available' : 'Unavailable' }}
+                </span>
+              </td>
+              <td class="equipment">
+                <span [class]="desk.hasMonitor ? 'equipment-item' : 'no-equipment'">
+                  {{ desk.hasMonitor ? 'Yes' : 'No' }}
+                </span>
+              </td>
+              <td class="description">{{ desk.description || 'No description' }}</td>
+              <td class="actions">
+                <button 
+                  type="button" 
+                  class="btn btn-warning btn-sm"
+                  (click)="editDesk(desk)"
+                  [disabled]="isLoading">
+                  Edit
+                </button>
+                <button 
+                  type="button" 
+                  class="btn btn-danger btn-sm"
+                  (click)="deleteDesk(desk)"
+                  [disabled]="isLoading">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 </div>
