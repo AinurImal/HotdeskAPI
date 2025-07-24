@@ -13,14 +13,19 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 // Main application configuration object - defines all providers and services
 export const appConfig: ApplicationConfig = {
   providers: [
+
     // Provide global error handling for uncaught browser errors
     provideBrowserGlobalErrorListeners(),
+
     // Enable zone.js change detection with event coalescing for better performance
     provideZoneChangeDetection({ eventCoalescing: true }),
+
     // Configure application routing with defined routes
     provideRouter(routes), 
+
     // Enable client-side hydration with event replay for SSR applications
     provideClientHydration(withEventReplay()),
+
     // Configure HTTP client with modern fetch API and interceptor support
     // withFetch(): Uses browser's native fetch API instead of XMLHttpRequest
     // withInterceptorsFromDi(): Enables dependency injection for HTTP interceptors

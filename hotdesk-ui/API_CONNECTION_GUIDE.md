@@ -81,40 +81,36 @@ The User page now includes API testing tools:
 **User:**
 ```json
 {
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@company.com",
-  "department": "IT",
-  "createdDate": "2025-01-01T00:00:00Z"
+    "userId": "f7d9b8c3-b715-4626-8e80-528d4ed2f723",
+    "fullName": "Ainur Imal",
+    "userName": "AinurImal",
+    "phoneNumber": "0123456789",
+    "email": "ainurimal11@example.com"
 }
 ```
 
 **Desk:**
 ```json
 {
-  "id": 1,
-  "deskNumber": "A-001",
-  "floor": 1,
-  "location": "Open Area",
-  "isAvailable": true,
-  "hasMonitor": true,
-  "hasKeyboard": true,
-  "hasMouse": true,
-  "description": "Window seat"
+    "deskId": 1,
+    "name": "A1",
+    "location": "PDSB",
+    "hasMonitor": true,
+    "isAvailable": true,
+    "description": "Single Desk"
 }
 ```
 
 **Booking:**
 ```json
 {
-  "id": 1,
-  "userId": 1,
-  "deskId": 1,
-  "bookingDate": "2025-01-01T00:00:00Z",
-  "startTime": "09:00",
-  "endTime": "17:00",
-  "status": 1,
-  "notes": "Full day booking"
+  "bookingId": 1,
+    "deskId": 1,
+    "userName": "JohnDoe",
+    "bookingDate": "2025-06-19T00:00:00",
+    "durationType": "Daily",
+    "checkedIn": false,
+    "checkInTime": null
 }
 ```
 

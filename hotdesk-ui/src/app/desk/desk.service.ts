@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class DeskService {
-  private readonly apiUrl = `${environment.apiUrl}/desks`;
+  private readonly apiUrl = `${environment.apiUrl}/Desks`;
 
   constructor(private http: HttpClient) {}
 
@@ -21,25 +21,17 @@ export class DeskService {
       );
   }
 
+  // GET - Retrieve a specific desk by ID
+  getDeskById(deskId: number): Observable<Desk> {
+    return this.http.get<Desk>(`${this.apiUrl}/${deskId}`)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
   // GET - Retrieve available desks only
   getAvailableDesks(): Observable<Desk[]> {
     return this.http.get<Desk[]>(`${this.apiUrl}/available`)
-      .pipe(
-        catchError(this.handleError)
-      );
-  }
-
-  // GET - Retrieve desks by floor
-  getDesksByFloor(floor: number): Observable<Desk[]> {
-    return this.http.get<Desk[]>(`${this.apiUrl}/floor/${floor}`)
-      .pipe(
-        catchError(this.handleError)
-      );
-  }
-
-  // GET - Retrieve a single desk by ID
-  getDeskById(id: number): Observable<Desk> {
-    return this.http.get<Desk>(`${this.apiUrl}/${id}`)
       .pipe(
         catchError(this.handleError)
       );
@@ -54,34 +46,66 @@ export class DeskService {
   }
 
   // PUT - Update an existing desk
-  updateDesk(desk: UpdateDeskRequest): Observable<Desk> {
-    return this.http.put<Desk>(`${this.apiUrl}/${desk.id}`, desk)
+  updateDesk(deskId: number, desk: UpdateDeskRequest): Observable<Desk> {
+    return this.http.put<Desk>(`${this.apiUrl}/${deskId}`, desk)
       .pipe(
         catchError(this.handleError)
       );
   }
 
-  // DELETE - Delete a desk by ID
-  deleteDesk(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`)
+  // DELETE - Remove a desk from the system permanently
+  deleteDesk(deskId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${deskId}`)
       .pipe(
         catchError(this.handleError)
       );
   }
 
-  // Error handling
-  private handleError(error: HttpErrorResponse): Observable<never> {
-    let errorMessage = 'An unknown error occurred!';
+  // Private method to handle HTTP errors with user-friendly messages
+  private handleError = (error: HttpErrorResponse): Observable<never> => {
+    let errorMessage = 'An unexpected error occurred. Please try again later.';
     
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
-      errorMessage = `Client Error: ${error.error.message}`;
+      // Client-side or network error occurred
+      errorMessage = `Network Error: ${error.error.message}`;
     } else {
-      // Server-side error
-      errorMessage = `Server Error Code: ${error.status}\nMessage: ${error.message}`;
+      // Backend returned an unsuccessful response code
+      switch (error.status) {
+        case 0:
+          errorMessage = 'Unable to connect to the server. Please check your internet connection or try again later.';
+          break;
+        case 400:
+          errorMessage = 'Invalid request. Please check your input and try again.';
+          break;
+        case 401:
+          errorMessage = 'You are not authorized to perform this action. Please log in and try again.';
+          break;
+        case 403:
+          errorMessage = 'You do not have permission to perform this action.';
+          break;
+        case 404:
+          errorMessage = 'The requested desk was not found. It may have been deleted or moved.';
+          break;
+        case 409:
+          errorMessage = 'A desk with this number already exists. Please use a different desk number.';
+          break;
+        case 422:
+          errorMessage = 'The provided data is invalid. Please check all fields and try again.';
+          break;
+        case 500:
+          errorMessage = 'Internal server error. Please contact support if this problem persists.';
+          break;
+        default:
+          errorMessage = `Server Error (${error.status}): ${error.error?.message || error.message || 'Unknown error occurred'}`;
+      }
     }
     
-    console.error(errorMessage);
-    return throwError(() => errorMessage);
-  }
+    console.error('DeskService Error:', {
+      status: error.status,
+      message: error.message,
+      error: error.error
+    });
+    
+    return throwError(() => new Error(errorMessage));
+  };
 }
