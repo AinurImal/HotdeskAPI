@@ -1,0 +1,174 @@
+<div class="home-layout">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Hotdesk</span>
+    </div>
+    <ul>
+      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">🏠 Home</a></li>
+      <li><a routerLink="/user" routerLinkActive="active">👤 Users</a></li>
+      <li><a routerLink="/desk" routerLinkActive="active">🪑 Desks</a></li>
+      <li><a routerLink="/booking" routerLinkActive="active">📅 Bookings</a></li>
+      <li><a routerLink="/bookfinder" routerLinkActive="active">🔍 Booking Finder</a></li>
+    </ul>
+  </nav>
+  <main class="content-area">
+    <h1>Booking Finder</h1>
+
+    <!-- Search Form -->
+    <div class="search-section">
+      <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="searchValue">Search Term</label>
+            <input 
+              type="text" 
+              id="searchValue" 
+              formControlName="searchValue"
+              placeholder="Enter search term..."
+              class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="searchBy">Search By</label>
+            <select id="searchBy" formControlName="searchBy" class="form-control">
+              <option value="desk">Desk</option>
+              <option value="user">User</option>
+              <option value="booking">Booking</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+            <span *ngIf="isLoading">Searching...</span>
+            <span *ngIf="!isLoading">Search</span>
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="onClear()">
+            Clear
+          </button>
+          <button type="button" class="btn btn-success" (click)="onLoadAll()">
+            Load All
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading BookFinder results...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      <p>{{ errorMessage }}</p>
+      <button class="btn btn-secondary" (click)="errorMessage = ''">Dismiss</button>
+    </div>
+
+    <!-- Results Section -->
+    <div *ngIf="!isLoading && bookFinders.length > 0 && hasSearched" class="results-section">
+      <div class="results-header">
+        <h3>Search Results ({{ bookFinders.length }} found)</h3>
+        <div class="results-actions">
+          <button class="btn btn-outline" (click)="exportResults()">Export</button>
+          <button class="btn btn-outline" (click)="refreshResults()">Refresh</button>
+        </div>
+      </div>
+
+      <!-- Results Table -->
+      <div class="table-container">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Booking ID</th>
+              <th>User</th>
+              <th>Desk</th>
+              <th>Location</th>
+              <th>Booking Date</th>
+              <th>Duration</th>
+              <th>Phone</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let bookFinder of bookFinders; let i = index" class="table-row">
+              <td class="id-column">{{ bookFinder.bookingId }}</td>
+              <td class="user-column">
+                <div class="user-info">
+                  <strong>{{ bookFinder.userName }}</strong>
+                </div>
+              </td>
+              <td class="desk-column">{{ bookFinder.deskName }}</td>
+              <td class="location-column">{{ bookFinder.location }}</td>
+              <td class="date-column">
+                <div class="date-info">
+                  {{ formatDate(bookFinder.bookingDate) }}
+                </div>
+              </td>
+              <td class="duration-column">
+                <span class="duration-badge">
+                  {{ getDurationTypeLabel(bookFinder.durationType) }}
+                </span>
+              </td>
+              <td class="phone-column">{{ bookFinder.phoneNumber }}</td>
+              <td class="actions-column">
+                <div class="action-buttons">
+                  <button class="btn btn-small btn-info" (click)="viewDetails(bookFinder)" title="View Details">
+                    View
+                  </button>
+                  <button class="btn btn-small btn-primary" (click)="editBooking(bookFinder)" title="Edit Booking">
+                    Edit
+                  </button>
+                  <button class="btn btn-small btn-danger" (click)="deleteBooking(bookFinder)" title="Delete Booking">
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-section" *ngIf="totalPages > 1">
+        <div class="pagination-info">
+          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} results
+        </div>
+        <div class="pagination-controls">
+          <button class="btn btn-outline" (click)="goToPage(1)" [disabled]="currentPage === 1">First</button>
+          <button class="btn btn-outline" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">Previous</button>
+          
+          <span class="page-numbers">
+            <button 
+              *ngFor="let page of getPageNumbers()" 
+              class="btn btn-outline page-btn"
+              [ngClass]="{'active': page === currentPage}"
+              (click)="goToPage(page)">
+              {{ page }}
+            </button>
+          </span>
+          
+          <button class="btn btn-outline" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">Next</button>
+          <button class="btn btn-outline" (click)="goToPage(totalPages)" [disabled]="currentPage === totalPages">Last</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Results -->
+    <div *ngIf="!isLoading && bookFinders.length === 0 && hasSearched" class="no-results">
+      <div class="no-results-icon">📚</div>
+      <h3>No BookFinder results found</h3>
+      <p>Try adjusting your search criteria or browse all available bookings.</p>
+      <button class="btn btn-primary" (click)="onLoadAll()">Load All BookFinder Results</button>
+    </div>
+
+    <!-- Welcome State -->
+    <div *ngIf="!isLoading && bookFinders.length === 0 && !hasSearched" class="welcome-state">
+      <div class="welcome-icon">🔍</div>
+      <h3>Welcome to BookFinder</h3>
+      <p>Use the search form above to find book-related bookings, or load all results to get started.</p>
+      <div class="welcome-actions">
+        <button class="btn btn-primary" (click)="onLoadAll()">Load All Results</button>
+        <button class="btn btn-outline" (click)="focusSearch()">Start Searching</button>
+      </div>
+    </div>
+  </main>
+</div>
