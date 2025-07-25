@@ -3,13 +3,12 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Booking, CreateBookingRequest, UpdateBookingRequest, BookingAvailabilityRequest } from './booking.model';
-import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BookingService {
-  private readonly apiUrl = `${environment.apiUrl}/bookings`;
+  private readonly apiUrl = '/api/Bookings'; // Using proxy configuration
 
   constructor(private http: HttpClient) {}
 
@@ -104,17 +103,34 @@ export class BookingService {
 
   // Error handling
   private handleError(error: HttpErrorResponse): Observable<never> {
-    let errorMessage = 'An unknown error occurred!';
+    let errorMessage = 'An unexpected error occurred';
     
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
-      errorMessage = `Client Error: ${error.error.message}`;
+      // Client-side or network error
+      errorMessage = `Connection Error: ${error.error.message}`;
     } else {
-      // Server-side error
-      errorMessage = `Server Error Code: ${error.status}\nMessage: ${error.message}`;
+      // Backend error
+      switch (error.status) {
+        case 400:
+          errorMessage = `Invalid Data: ${error.error?.message || 'Please check your input and try again.'}`;
+          break;
+        case 404:
+          errorMessage = 'Booking not found. It may have been deleted or moved.';
+          break;
+        case 409:
+          errorMessage = `Duplicate Entry: ${error.error?.message || 'A booking with similar details already exists.'}`;
+          break;
+        case 500:
+          errorMessage = 'Server Error: Please try again later or contact support.';
+          break;
+        case 0:
+          errorMessage = 'Connection Error: Unable to connect to the server. Please check if the HotdeskAPI is running.';
+          break;
+        default:
+          errorMessage = `Error ${error.status}: ${error.error?.message || error.message}`;
+      }
     }
     
-    console.error(errorMessage);
     return throwError(() => errorMessage);
   }
 }

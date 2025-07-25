@@ -11,8 +11,270 @@
     </ul>
   </nav>
   <main class="content-area">
-    <h1>Welcome to Booking Page!</h1>
-    <p class="cyan">booking works!</p>
+    <h1>Booking Management</h1>
+    
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading">
+      <p>Loading...</p>
+    </div>
+
+    <!-- Error message display with different styling for different error types -->
+    <div *ngIf="errorMessage" class="error-container">
+      <!-- Duplicate/Conflict Error (409) -->
+      <div *ngIf="errorMessage.includes('Duplicate Entry')" class="error-message duplicate-error">
+        <div class="error-icon">⚠️</div>
+        <div class="error-content">
+          <h4>Duplicate Information Detected</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please modify the booking details and try again.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Validation Error (400) -->
+      <div *ngIf="errorMessage.includes('Invalid Data')" class="error-message validation-error">
+        <div class="error-icon">❌</div>
+        <div class="error-content">
+          <h4>Input Validation Failed</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please ensure all required fields are filled correctly.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Connection Error (0) -->
+      <div *ngIf="errorMessage.includes('Connection Error')" class="error-message connection-error">
+        <div class="error-icon">🔌</div>
+        <div class="error-content">
+          <h4>Connection Problem</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please check if the HotdeskAPI server is running.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Generic Error (for other cases) -->
+      <div *ngIf="!errorMessage.includes('Duplicate Entry') && !errorMessage.includes('Invalid Data') && !errorMessage.includes('Connection Error')" class="error-message generic-error">
+        <div class="error-icon">⚠️</div>
+        <div class="error-content">
+          <h4>Operation Failed</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please try again or contact support if the problem persists.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+    </div>
+
+    <!-- Success message display -->
+    <div *ngIf="successMessage" class="success-message">
+      <div class="success-icon">✅</div>
+      <div class="success-content">
+        <p>{{ successMessage }}</p>
+      </div>
+      <button (click)="successMessage = ''" class="btn btn-sm btn-clear">×</button>
+    </div>
+
+    <!-- Create/Edit Booking Form -->
+    <div class="user-form-section">
+      <h2>{{ isEditMode ? 'Edit Booking' : 'Add New Booking' }}</h2>
+      <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="user-form">
+        <div class="form-group" *ngIf="isEditMode">
+          <label for="bookingId">Booking ID:</label>
+          <input 
+            type="number" 
+            id="bookingId" 
+            formControlName="bookingId"
+            placeholder="Auto-generated"
+            readonly
+            class="form-control readonly">
+        </div>
+
+        <div class="form-group">
+          <label for="userId">User *:</label>
+          <select 
+            id="userId" 
+            formControlName="userId"
+            [class.error]="isFieldInvalid('userId')"
+            class="form-control">
+            <option value="">Select a user</option>
+            <option *ngFor="let user of users" [value]="user.userId">
+              {{ user.fullName }} ({{ user.userName }})
+            </option>
+          </select>
+          <div *ngIf="isFieldInvalid('userId')" class="field-error">
+            {{ getFieldError('userId') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="deskId">Desk *:</label>
+          <select 
+            id="deskId" 
+            formControlName="deskId"
+            [class.error]="isFieldInvalid('deskId')"
+            class="form-control">
+            <option value="">Select a desk</option>
+            <option *ngFor="let desk of desks" [value]="desk.deskId">
+              {{ desk.name }} - {{ desk.location }}{{ desk.hasMonitor ? ' (Monitor Available)' : '' }}
+            </option>
+          </select>
+          <div *ngIf="isFieldInvalid('deskId')" class="field-error">
+            {{ getFieldError('deskId') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="bookingDate">Booking Date *:</label>
+          <input 
+            type="date" 
+            id="bookingDate" 
+            formControlName="bookingDate"
+            [class.error]="isFieldInvalid('bookingDate')"
+            class="form-control">
+          <div *ngIf="isFieldInvalid('bookingDate')" class="field-error">
+            {{ getFieldError('bookingDate') }}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startTime">Start Time *:</label>
+            <input 
+              type="time" 
+              id="startTime" 
+              formControlName="startTime"
+              [class.error]="isFieldInvalid('startTime')"
+              class="form-control">
+            <div *ngIf="isFieldInvalid('startTime')" class="field-error">
+              {{ getFieldError('startTime') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="endTime">End Time *:</label>
+            <input 
+              type="time" 
+              id="endTime" 
+              formControlName="endTime"
+              [class.error]="isFieldInvalid('endTime')"
+              class="form-control">
+            <div *ngIf="isFieldInvalid('endTime')" class="field-error">
+              {{ getFieldError('endTime') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="isEditMode">
+          <label for="status">Status *:</label>
+          <select 
+            id="status" 
+            formControlName="status"
+            [class.error]="isFieldInvalid('status')"
+            class="form-control">
+            <option *ngFor="let status of bookingStatuses" [value]="status.value">
+              {{ status.label }}
+            </option>
+          </select>
+          <div *ngIf="isFieldInvalid('status')" class="field-error">
+            {{ getFieldError('status') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Notes:</label>
+          <textarea 
+            id="notes" 
+            formControlName="notes"
+            placeholder="Additional notes about the booking (optional)"
+            rows="3"
+            class="form-control">
+          </textarea>
+        </div>
+
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="isLoading || !bookingForm.valid">
+          {{ isLoading ? 'Processing...' : (isEditMode ? 'Update Booking' : 'Create Booking') }}
+        </button>
+      </form>
+    </div>
+
+    <!-- Bookings List -->
+    <div class="users-section">
+      <div class="section-header">
+        <h2>All Bookings ({{ bookings.length }})</h2>
+        <div class="header-actions">
+          <button (click)="loadBookings()" class="btn btn-secondary" [disabled]="isLoading">
+            {{ isLoading ? 'Loading...' : 'Refresh' }}
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            (click)="resetForm()"
+            [disabled]="isLoading">
+            {{ isEditMode ? 'Cancel Edit' : 'Clear Form' }}
+          </button>
+        </div>
+      </div>
+      
+      <div *ngIf="bookings.length === 0 && !isLoading" class="no-data">
+        <p>No bookings found. Create your first booking using the form above.</p>
+      </div>
+
+      <div *ngIf="bookings.length > 0" class="users-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Booking ID</th>
+              <th>User</th>
+              <th>Desk</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let booking of bookings" [class.editing]="editingBookingId === booking.id">
+              <td class="booking-id">{{ booking.id }}</td>
+              <td class="user-name">{{ getUserName(booking.userId) }}</td>
+              <td class="desk-info">
+                <div class="desk-name">{{ getDeskName(booking.deskId) }}</div>
+                <div class="desk-location">{{ getDeskLocation(booking.deskId) }}</div>
+              </td>
+              <td class="booking-date">{{ booking.bookingDate | date:'shortDate' }}</td>
+              <td class="booking-time">
+                <div>{{ booking.startTime }} - {{ booking.endTime }}</div>
+              </td>
+              <td>
+                <span [class]="'status ' + getStatusClass(booking.status)">
+                  {{ getStatusLabel(booking.status) }}
+                </span>
+              </td>
+              <td class="notes">{{ booking.notes || 'No notes' }}</td>
+              <td class="actions">
+                <button 
+                  type="button" 
+                  class="btn btn-warning btn-sm"
+                  (click)="editBooking(booking)"
+                  [disabled]="isLoading">
+                  Edit
+                </button>
+                <button 
+                  type="button" 
+                  class="btn btn-danger btn-sm"
+                  (click)="deleteBooking(booking)"
+                  [disabled]="isLoading">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </main>
 </div>
 
