@@ -20,9 +20,9 @@ export class BookingService {
       );
   }
 
-  // GET - Retrieve bookings by user ID
-  getBookingsByUserId(userId: number): Observable<Booking[]> {
-    return this.http.get<Booking[]>(`${this.apiUrl}/user/${userId}`)
+  // GET - Retrieve bookings by user name
+  getBookingsByUserName(userName: string): Observable<Booking[]> {
+    return this.http.get<Booking[]>(`${this.apiUrl}/user/${userName}`)
       .pipe(
         catchError(this.handleError)
       );
@@ -63,7 +63,7 @@ export class BookingService {
 
   // PUT - Update an existing booking
   updateBooking(booking: UpdateBookingRequest): Observable<Booking> {
-    return this.http.put<Booking>(`${this.apiUrl}/${booking.id}`, booking)
+    return this.http.put<Booking>(`${this.apiUrl}/${booking.bookingId}`, booking)
       .pipe(
         catchError(this.handleError)
       );

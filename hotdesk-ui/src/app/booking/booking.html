@@ -78,8 +78,9 @@
     <div class="user-form-section">
       <h2>{{ isEditMode ? 'Edit Booking' : 'Add New Booking' }}</h2>
       <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="user-form">
+        <!-- Booking ID - Auto-generated, only show in edit mode -->
         <div class="form-group" *ngIf="isEditMode">
-          <label for="bookingId">Booking ID:</label>
+          <label for="bookingId">Booking ID (Auto-generated):</label>
           <input 
             type="number" 
             id="bookingId" 
@@ -87,23 +88,6 @@
             placeholder="Auto-generated"
             readonly
             class="form-control readonly">
-        </div>
-
-        <div class="form-group">
-          <label for="userId">User *:</label>
-          <select 
-            id="userId" 
-            formControlName="userId"
-            [class.error]="isFieldInvalid('userId')"
-            class="form-control">
-            <option value="">Select a user</option>
-            <option *ngFor="let user of users" [value]="user.userId">
-              {{ user.fullName }} ({{ user.userName }})
-            </option>
-          </select>
-          <div *ngIf="isFieldInvalid('userId')" class="field-error">
-            {{ getFieldError('userId') }}
-          </div>
         </div>
 
         <div class="form-group">
@@ -124,6 +108,20 @@
         </div>
 
         <div class="form-group">
+          <label for="userName">User Name *:</label>
+          <input 
+            type="text" 
+            id="userName" 
+            formControlName="userName"
+            [class.error]="isFieldInvalid('userName')"
+            placeholder="Enter user name (must match existing user)"
+            class="form-control">
+          <div *ngIf="isFieldInvalid('userName')" class="field-error">
+            {{ getFieldError('userName') }}
+          </div>
+        </div>
+
+        <div class="form-group">
           <label for="bookingDate">Booking Date *:</label>
           <input 
             type="date" 
@@ -136,59 +134,43 @@
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="startTime">Start Time *:</label>
-            <input 
-              type="time" 
-              id="startTime" 
-              formControlName="startTime"
-              [class.error]="isFieldInvalid('startTime')"
-              class="form-control">
-            <div *ngIf="isFieldInvalid('startTime')" class="field-error">
-              {{ getFieldError('startTime') }}
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="endTime">End Time *:</label>
-            <input 
-              type="time" 
-              id="endTime" 
-              formControlName="endTime"
-              [class.error]="isFieldInvalid('endTime')"
-              class="form-control">
-            <div *ngIf="isFieldInvalid('endTime')" class="field-error">
-              {{ getFieldError('endTime') }}
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="isEditMode">
-          <label for="status">Status *:</label>
+        <div class="form-group">
+          <label for="durationType">Duration Type *:</label>
           <select 
-            id="status" 
-            formControlName="status"
-            [class.error]="isFieldInvalid('status')"
+            id="durationType" 
+            formControlName="durationType"
+            [class.error]="isFieldInvalid('durationType')"
             class="form-control">
-            <option *ngFor="let status of bookingStatuses" [value]="status.value">
-              {{ status.label }}
+            <option *ngFor="let duration of durationTypes" [value]="duration.value">
+              {{ duration.label }}
             </option>
           </select>
-          <div *ngIf="isFieldInvalid('status')" class="field-error">
-            {{ getFieldError('status') }}
+          <div *ngIf="isFieldInvalid('durationType')" class="field-error">
+            {{ getFieldError('durationType') }}
           </div>
         </div>
 
         <div class="form-group">
-          <label for="notes">Notes:</label>
-          <textarea 
-            id="notes" 
-            formControlName="notes"
-            placeholder="Additional notes about the booking (optional)"
-            rows="3"
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              formControlName="checkedIn"
+              (change)="onCheckedInChange()">
+            Checked In
+          </label>
+        </div>
+
+        <div class="form-group" *ngIf="bookingForm.get('checkedIn')?.value">
+          <label for="checkInTime">Check-in Time:</label>
+          <input 
+            type="time" 
+            id="checkInTime" 
+            formControlName="checkInTime"
+            [class.error]="isFieldInvalid('checkInTime')"
             class="form-control">
-          </textarea>
+          <div *ngIf="isFieldInvalid('checkInTime')" class="field-error">
+            {{ getFieldError('checkInTime') }}
+          </div>
         </div>
 
         <button 
@@ -227,33 +209,35 @@
           <thead>
             <tr>
               <th>Booking ID</th>
-              <th>User</th>
+              <th>User Name</th>
               <th>Desk</th>
               <th>Date</th>
-              <th>Time</th>
-              <th>Status</th>
-              <th>Notes</th>
+              <th>Duration</th>
+              <th>Check-in Status</th>
+              <th>Check-in Time</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let booking of bookings" [class.editing]="editingBookingId === booking.id">
-              <td class="booking-id">{{ booking.id }}</td>
-              <td class="user-name">{{ getUserName(booking.userId) }}</td>
+            <tr *ngFor="let booking of bookings" [class.editing]="editingBookingId === booking.bookingId">
+              <td class="booking-id">{{ booking.bookingId }}</td>
+              <td class="user-name">{{ booking.userName }}</td>
               <td class="desk-info">
                 <div class="desk-name">{{ getDeskName(booking.deskId) }}</div>
                 <div class="desk-location">{{ getDeskLocation(booking.deskId) }}</div>
               </td>
               <td class="booking-date">{{ booking.bookingDate | date:'shortDate' }}</td>
-              <td class="booking-time">
-                <div>{{ booking.startTime }} - {{ booking.endTime }}</div>
+              <td class="duration-type">
+                <span class="duration-badge">{{ getDurationTypeLabel(booking.durationType) }}</span>
               </td>
               <td>
-                <span [class]="'status ' + getStatusClass(booking.status)">
-                  {{ getStatusLabel(booking.status) }}
+                <span [class]="'checkin-status ' + (booking.checkedIn ? 'checked-in' : 'not-checked-in')">
+                  {{ booking.checkedIn ? 'Checked In' : 'Not Checked In' }}
                 </span>
               </td>
-              <td class="notes">{{ booking.notes || 'No notes' }}</td>
+              <td class="checkin-time">
+                {{ booking.checkedIn && booking.checkInTime ? booking.checkInTime : '-' }}
+              </td>
               <td class="actions">
                 <button 
                   type="button" 

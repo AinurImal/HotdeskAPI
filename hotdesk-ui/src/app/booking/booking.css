@@ -566,3 +566,66 @@
     padding: 0.5rem;
   }
 }
+
+/* Duration Badge Styles */
+.duration-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+/* Check-in Status Styles */
+.checkin-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.checkin-status.checked-in {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #a3d4a8;
+}
+
+.checkin-status.not-checked-in {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+/* Table Cell Specific Styles for New Fields */
+.duration-type {
+  text-align: center;
+}
+
+.checkin-time {
+  font-family: monospace;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Checkbox styling improvements */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #232946;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: #232946;
+  cursor: pointer;
+}

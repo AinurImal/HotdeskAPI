@@ -3,10 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BookingService } from './booking.service';
-import { Booking, CreateBookingRequest, UpdateBookingRequest, BookingStatus } from './booking.model';
-import { UserService } from '../user/user.service';
+import { Booking, CreateBookingRequest, UpdateBookingRequest, DURATION_TYPES } from './booking.model';
 import { DeskService } from '../desk/desk.service';
-import { User } from '../user/user.model';
 import { Desk } from '../desk/desk.model';
 
 @Component({
@@ -19,7 +17,6 @@ import { Desk } from '../desk/desk.model';
 export class BookingComponent implements OnInit {
   bookingForm: FormGroup;
   bookings: Booking[] = [];
-  users: User[] = [];
   desks: Desk[] = [];
   isLoading = false;
   errorMessage = '';
@@ -27,20 +24,12 @@ export class BookingComponent implements OnInit {
   isEditMode = false;
   editingBookingId: number | null = null;
   
-  // Booking status options
-  bookingStatuses = [
-    { value: BookingStatus.Pending, label: 'Pending' },
-    { value: BookingStatus.Confirmed, label: 'Confirmed' },
-    { value: BookingStatus.CheckedIn, label: 'Checked In' },
-    { value: BookingStatus.Completed, label: 'Completed' },
-    { value: BookingStatus.Cancelled, label: 'Cancelled' },
-    { value: BookingStatus.NoShow, label: 'No Show' }
-  ];
+  // Duration type options
+  durationTypes = DURATION_TYPES;
 
   constructor(
     private fb: FormBuilder,
     private bookingService: BookingService,
-    private userService: UserService,
     private deskService: DeskService
   ) {
     this.bookingForm = this.createForm();
@@ -48,7 +37,6 @@ export class BookingComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadBookings();
-    this.loadUsers();
     this.loadDesks();
   }
 
@@ -58,13 +46,12 @@ export class BookingComponent implements OnInit {
   private createForm(): FormGroup {
     return this.fb.group({
       bookingId: [''],
-      userId: ['', [Validators.required]],
       deskId: ['', [Validators.required]],
+      userName: ['', [Validators.required, Validators.minLength(2)]],
       bookingDate: ['', [Validators.required]],
-      startTime: ['', [Validators.required]],
-      endTime: ['', [Validators.required]],
-      status: [BookingStatus.Pending, [Validators.required]],
-      notes: ['']
+      durationType: ['daily', [Validators.required]],
+      checkedIn: [false],
+      checkInTime: ['']
     });
   }
 
@@ -83,20 +70,6 @@ export class BookingComponent implements OnInit {
       error: (error) => {
         this.errorMessage = error;
         this.isLoading = false;
-      }
-    });
-  }
-
-  /**
-   * Loads all users for the dropdown
-   */
-  loadUsers(): void {
-    this.userService.getUsers().subscribe({
-      next: (users) => {
-        this.users = users;
-      },
-      error: (error) => {
-        console.error('Failed to load users:', error);
       }
     });
   }
@@ -140,18 +113,18 @@ export class BookingComponent implements OnInit {
 
     const formValue = this.bookingForm.value;
     const newBooking: CreateBookingRequest = {
-      userId: parseInt(formValue.userId),
       deskId: parseInt(formValue.deskId),
+      userName: formValue.userName.trim(),
       bookingDate: new Date(formValue.bookingDate),
-      startTime: formValue.startTime,
-      endTime: formValue.endTime,
-      notes: formValue.notes || undefined
+      durationType: formValue.durationType,
+      checkedIn: formValue.checkedIn,
+      checkInTime: formValue.checkedIn && formValue.checkInTime ? formValue.checkInTime : undefined
     };
 
     this.bookingService.createBooking(newBooking).subscribe({
       next: (createdBooking) => {
         this.bookings.unshift(createdBooking);
-        this.successMessage = `Booking created successfully for ${this.getUserName(createdBooking.userId)} at ${this.getDeskName(createdBooking.deskId)}!`;
+        this.successMessage = `Booking created successfully for ${createdBooking.userName} at ${this.getDeskName(createdBooking.deskId)}!`;
         this.resetForm();
         this.isLoading = false;
       },
@@ -172,23 +145,22 @@ export class BookingComponent implements OnInit {
 
     const formValue = this.bookingForm.value;
     const updatedBooking: UpdateBookingRequest = {
-      id: this.editingBookingId!,
-      userId: parseInt(formValue.userId),
+      bookingId: this.editingBookingId!,
       deskId: parseInt(formValue.deskId),
+      userName: formValue.userName.trim(),
       bookingDate: new Date(formValue.bookingDate),
-      startTime: formValue.startTime,
-      endTime: formValue.endTime,
-      status: parseInt(formValue.status),
-      notes: formValue.notes || undefined
+      durationType: formValue.durationType,
+      checkedIn: formValue.checkedIn,
+      checkInTime: formValue.checkedIn && formValue.checkInTime ? formValue.checkInTime : undefined
     };
 
     this.bookingService.updateBooking(updatedBooking).subscribe({
       next: (booking) => {
-        const index = this.bookings.findIndex(b => b.id === this.editingBookingId);
+        const index = this.bookings.findIndex(b => b.bookingId === this.editingBookingId);
         if (index !== -1) {
           this.bookings[index] = booking;
         }
-        this.successMessage = `Booking updated successfully for ${this.getUserName(booking.userId)} at ${this.getDeskName(booking.deskId)}!`;
+        this.successMessage = `Booking updated successfully for ${booking.userName} at ${this.getDeskName(booking.deskId)}!`;
         this.resetForm();
         this.isLoading = false;
       },
@@ -204,7 +176,7 @@ export class BookingComponent implements OnInit {
    */
   editBooking(booking: Booking): void {
     this.isEditMode = true;
-    this.editingBookingId = booking.id || null;
+    this.editingBookingId = booking.bookingId || null;
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -213,14 +185,13 @@ export class BookingComponent implements OnInit {
     const formattedDate = bookingDate.toISOString().split('T')[0];
 
     this.bookingForm.patchValue({
-      bookingId: booking.id,
-      userId: booking.userId,
+      bookingId: booking.bookingId,
       deskId: booking.deskId,
+      userName: booking.userName,
       bookingDate: formattedDate,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
-      status: booking.status,
-      notes: booking.notes
+      durationType: booking.durationType,
+      checkedIn: booking.checkedIn,
+      checkInTime: booking.checkInTime || ''
     });
   }
 
@@ -228,20 +199,17 @@ export class BookingComponent implements OnInit {
    * Deletes a booking with confirmation
    */
   deleteBooking(booking: Booking): void {
-    if (!booking.id) {
+    if (!booking.bookingId) {
       return;
     }
 
-    const userName = this.getUserName(booking.userId);
-    const deskName = this.getDeskName(booking.deskId);
-    
-    const confirmed = confirm(`Are you sure you want to delete the booking for ${userName} at ${deskName}? This action cannot be undone.`);
+    const confirmed = confirm(`Are you sure you want to delete the booking for ${booking.userName} at ${this.getDeskName(booking.deskId)}? This action cannot be undone.`);
     
     if (confirmed) {
-      this.bookingService.deleteBooking(booking.id).subscribe({
+      this.bookingService.deleteBooking(booking.bookingId).subscribe({
         next: () => {
-          this.bookings = this.bookings.filter(b => b.id !== booking.id);
-          this.successMessage = `Booking for ${userName} at ${deskName} deleted successfully!`;
+          this.bookings = this.bookings.filter(b => b.bookingId !== booking.bookingId);
+          this.successMessage = `Booking for ${booking.userName} at ${this.getDeskName(booking.deskId)} deleted successfully!`;
           this.errorMessage = '';
         },
         error: (error) => {
@@ -259,13 +227,12 @@ export class BookingComponent implements OnInit {
     this.editingBookingId = null;
     this.bookingForm.reset({
       bookingId: '',
-      userId: '',
       deskId: '',
+      userName: '',
       bookingDate: '',
-      startTime: '',
-      endTime: '',
-      status: BookingStatus.Pending,
-      notes: ''
+      durationType: 'daily',
+      checkedIn: false,
+      checkInTime: ''
     });
     this.errorMessage = '';
   }
@@ -296,8 +263,8 @@ export class BookingComponent implements OnInit {
       if (field.errors['required']) {
         return `${this.getFieldDisplayName(fieldName)} is required.`;
       }
-      if (field.errors['pattern']) {
-        return `${this.getFieldDisplayName(fieldName)} format is invalid.`;
+      if (field.errors['minlength']) {
+        return `${this.getFieldDisplayName(fieldName)} must be at least ${field.errors['minlength'].requiredLength} characters.`;
       }
     }
     return '';
@@ -308,22 +275,13 @@ export class BookingComponent implements OnInit {
    */
   private getFieldDisplayName(fieldName: string): string {
     const fieldNames: { [key: string]: string } = {
-      userId: 'User',
       deskId: 'Desk',
+      userName: 'User Name',
       bookingDate: 'Booking Date',
-      startTime: 'Start Time',
-      endTime: 'End Time',
-      status: 'Status'
+      durationType: 'Duration Type',
+      checkInTime: 'Check-in Time'
     };
     return fieldNames[fieldName] || fieldName;
-  }
-
-  /**
-   * Gets user name by ID
-   */
-  getUserName(userId: number): string {
-    const user = this.users.find(u => u.userId === userId.toString());
-    return user ? user.fullName : `User ${userId}`;
   }
 
   /**
@@ -343,30 +301,26 @@ export class BookingComponent implements OnInit {
   }
 
   /**
-   * Gets booking status label
+   * Gets duration type label
    */
-  getStatusLabel(status: BookingStatus): string {
-    const statusOption = this.bookingStatuses.find(s => s.value === status);
-    return statusOption ? statusOption.label : 'Unknown';
+  getDurationTypeLabel(durationType: string): string {
+    const duration = this.durationTypes.find(d => d.value === durationType);
+    return duration ? duration.label : durationType;
   }
 
   /**
-   * Gets CSS class for booking status
+   * Handles check-in checkbox change
    */
-  getStatusClass(status: BookingStatus): string {
-    switch (status) {
-      case BookingStatus.Confirmed:
-        return 'status-confirmed';
-      case BookingStatus.CheckedIn:
-        return 'status-checked-in';
-      case BookingStatus.Completed:
-        return 'status-completed';
-      case BookingStatus.Cancelled:
-        return 'status-cancelled';
-      case BookingStatus.NoShow:
-        return 'status-no-show';
-      default:
-        return 'status-pending';
+  onCheckedInChange(): void {
+    const checkedIn = this.bookingForm.get('checkedIn')?.value;
+    if (checkedIn && !this.bookingForm.get('checkInTime')?.value) {
+      // Auto-fill current time when checking in
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+      this.bookingForm.patchValue({ checkInTime: currentTime });
+    } else if (!checkedIn) {
+      // Clear check-in time when unchecking
+      this.bookingForm.patchValue({ checkInTime: '' });
     }
   }
 }

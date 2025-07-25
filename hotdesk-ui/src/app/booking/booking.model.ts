@@ -1,52 +1,52 @@
 export interface Booking {
-  id?: number;
-  userId: number;
-  deskId: number;
-  bookingDate: Date;
-  startTime: string;
-  endTime: string;
-  status: BookingStatus;
-  notes?: string;
+  bookingId?: number;        // Auto-generated, not displayed in form
+  deskId: number;           // Dropdown selection
+  userName: string;         // Input by user (must match existing user)
+  bookingDate: Date;        // Calendar input
+  durationType: string;     // Dropdown (specifically state daily)
+  checkedIn: boolean;       // Checkbox
+  checkInTime?: string;     // Time input (optional, when checked in)
   createdDate?: Date;
   updatedDate?: Date;
-  // Navigation properties
-  userName?: string;
-  deskNumber?: string;
+  // Navigation properties for display
+  deskName?: string;
   deskLocation?: string;
 }
 
 export interface CreateBookingRequest {
-  userId: number;
-  deskId: number;
-  bookingDate: Date;
-  startTime: string;
-  endTime: string;
-  notes?: string;
+  deskId: number;           // Dropdown selection
+  userName: string;         // Input by user
+  bookingDate: Date;        // Calendar input
+  durationType: string;     // Dropdown (daily)
+  checkedIn: boolean;       // Checkbox
+  checkInTime?: string;     // Time input (optional)
 }
 
 export interface UpdateBookingRequest {
-  id: number;
-  userId: number;
-  deskId: number;
-  bookingDate: Date;
-  startTime: string;
-  endTime: string;
-  status: BookingStatus;
-  notes?: string;
+  bookingId: number;        // Required for update
+  deskId: number;           // Dropdown selection
+  userName: string;         // Input by user
+  bookingDate: Date;        // Calendar input
+  durationType: string;     // Dropdown (daily)
+  checkedIn: boolean;       // Checkbox
+  checkInTime?: string;     // Time input (optional)
 }
 
-export enum BookingStatus {
-  Pending = 0,
-  Confirmed = 1,
-  CheckedIn = 2,
-  Completed = 3,
-  Cancelled = 4,
-  NoShow = 5
+// Duration type options
+export interface DurationType {
+  value: string;
+  label: string;
 }
+
+export const DURATION_TYPES: DurationType[] = [
+  { value: 'daily', label: 'Daily' },
+  { value: 'half-day-morning', label: 'Half Day (Morning)' },
+  { value: 'half-day-afternoon', label: 'Half Day (Afternoon)' }
+];
 
 export interface BookingAvailabilityRequest {
   deskId: number;
   bookingDate: Date;
-  startTime: string;
+  durationType: string;
   endTime: string;
 }
