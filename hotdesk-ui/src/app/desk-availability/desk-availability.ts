@@ -45,11 +45,19 @@ export class DeskAvailabilityComponent implements OnInit {
 
   /**
    * Load desk availability data using HotdeskAPI logic with date-specific availability
-   * Uses both all desks and date-specific availability checks
+   * Uses both all desks and date-specific availability checks with Monday morning validation
    */
   loadDeskAvailability(): void {
     this.isLoading = true;
     this.clearMessages();
+    
+    // Validate date before proceeding
+    const dateValidationError = this.validateSelectedDate();
+    if (dateValidationError) {
+      this.errorMessage = dateValidationError;
+      this.isLoading = false;
+      return;
+    }
     
     // First get all desks
     this.deskService.getDesks().pipe(
@@ -59,8 +67,6 @@ export class DeskAvailabilityComponent implements OnInit {
     ).subscribe({
       next: (allDesks) => {
         this.desks = this.validateDeskData(allDesks);
-        console.log('All Desks from Backend:', this.desks);
-        console.log('Desk isAvailable statuses:', this.desks.map(d => ({id: d.deskId, name: d.name, isAvailable: d.isAvailable})));
         
         // Check availability for each desk on the selected date
         this.checkDesksAvailabilityForDate();
@@ -81,9 +87,6 @@ export class DeskAvailabilityComponent implements OnInit {
     // Use only the system isAvailable status
     this.availableDesks = this.desks.filter(desk => desk.isAvailable === true);
     this.unavailableDesks = this.desks.filter(desk => desk.isAvailable === false);
-    
-    console.log('System-only Available Desks:', this.availableDesks);
-    console.log('System-only Unavailable Desks:', this.unavailableDesks);
     
     this.successMessage = `Showing system availability only: ${this.availableDesks.length} available, ${this.unavailableDesks.length} unavailable (ignoring date-specific bookings).`;
   }
@@ -127,42 +130,60 @@ export class DeskAvailabilityComponent implements OnInit {
     }
 
     const dateForApi = this.formatDateForApi(this.selectedDate);
-    console.log('Checking availability for date:', dateForApi);
-    console.log('Base available desks (isAvailable=true):', baseAvailableDesks);
 
     // Check date-specific availability for each system-available desk
     const availabilityChecks = baseAvailableDesks.map(desk => {
-      return this.deskService.checkDeskAvailability(desk.deskId!, dateForApi).pipe(
+      return this.deskService.checkDeskAvailability(desk.deskId!, this.selectedDate).pipe(
         catchError(error => {
           console.error(`Error checking availability for desk ${desk.deskId}:`, error);
-          // On error, assume desk is unavailable for safety
-          return of({ DeskId: desk.deskId, IsAvailable: false });
+          
+          // Monday morning error handling - provide fallback response
+          if (error.message?.includes('past dates')) {
+            // For past date validation errors, assume available (historical data)
+            return of({ deskId: desk.deskId, isAvailable: true, message: 'Historical data - showing as available' });
+          } else if (error.message?.includes('Invalid')) {
+            // For validation errors, assume unavailable for safety
+            return of({ deskId: desk.deskId, isAvailable: false, message: 'Validation error - showing as unavailable' });
+          } else {
+            // For other errors, respect system status
+            return of({ deskId: desk.deskId, isAvailable: true, message: 'API check failed, using system status' });
+          }
         })
       );
     });
 
     forkJoin(availabilityChecks).subscribe({
       next: (availabilityResults) => {
-        console.log('Availability Results:', availabilityResults);
         
         this.availableDesks = [];
         this.unavailableDesks = [];
 
         this.desks.forEach(desk => {
-          const availabilityResult = availabilityResults.find(result => result.DeskId === desk.deskId);
-          if (availabilityResult && availabilityResult.IsAvailable) {
-            this.availableDesks.push({ ...desk, isAvailable: true });
-          } else if (availabilityResult && availabilityResult.IsAvailable === false) {
-            // Desk is available in system but booked for this date
-            this.unavailableDesks.push({ ...desk, isAvailable: false });
+          // Handle both camelCase and PascalCase response properties for compatibility
+          const availabilityResult = availabilityResults.find(result => 
+            (result as any).deskId === desk.deskId || (result as any).DeskId === desk.deskId
+          );
+          
+          if (availabilityResult) {
+            // Check availability using both property naming conventions
+            const isAvailable = (availabilityResult as any).isAvailable !== undefined 
+              ? (availabilityResult as any).isAvailable 
+              : (availabilityResult as any).IsAvailable;
+              
+            if (isAvailable === true) {
+              this.availableDesks.push({ ...desk, isAvailable: true });
+            } else if (isAvailable === false) {
+              // Desk is available in system but booked for this date
+              this.unavailableDesks.push({ ...desk, isAvailable: false });
+            } else {
+              // No clear availability result, use system status (desk.isAvailable = true)
+              this.availableDesks.push({ ...desk, isAvailable: true });
+            }
           } else {
             // No availability result, use system status (desk.isAvailable = true)
             this.availableDesks.push({ ...desk, isAvailable: true });
           }
         });
-
-        console.log('Final Available Desks (system + date available):', this.availableDesks);
-        console.log('Final Unavailable Desks (system disabled OR date booked):', this.unavailableDesks);
 
         // Show detailed success message with booking information
         const bookedDesks = this.unavailableDesks.length;
@@ -402,7 +423,7 @@ export class DeskAvailabilityComponent implements OnInit {
     if (desk.isAvailable === false) {
       return {
         status: 'system-disabled',
-        statusText: 'System Disabled',
+        statusText: 'Booked',
         statusClass: 'desk-status system-disabled'
       };
     }
@@ -432,5 +453,40 @@ export class DeskAvailabilityComponent implements OnInit {
     if (this.selectedDate) {
       this.loadDeskAvailability();
     }
+  }
+
+  /**
+   * Monday morning validation for selected date
+   * @returns Error message if validation fails, null if validation passes
+   */
+  private validateSelectedDate(): string | null {
+    if (!this.selectedDate) {
+      return null; // Date is optional, will show system availability
+    }
+
+    // Check date format (should be YYYY-MM-DD from HTML date input)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(this.selectedDate)) {
+      return 'Invalid date format. Please select a valid date from the date picker.';
+    }
+
+    // Check if date is valid
+    const parsedDate = new Date(this.selectedDate);
+    if (isNaN(parsedDate.getTime())) {
+      return 'Invalid date selected. Please choose a valid date.';
+    }
+
+    // Business rule validation - past dates allowed for checking historical bookings
+    // (This differs from the service validation which is for new bookings)
+    
+    // Business rule validation - cannot check too far in the future
+    const maxFutureDate = new Date();
+    maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 1); // 1 year ahead for availability checking
+    
+    if (parsedDate > maxFutureDate) {
+      return 'Cannot check availability more than 1 year in advance. Please select a nearer date.';
+    }
+
+    return null; // No validation errors
   }
 }

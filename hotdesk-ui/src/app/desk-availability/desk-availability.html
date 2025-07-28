@@ -278,7 +278,7 @@
               <td class="desk-description">{{ desk.description || 'No description' }}</td>
               <td class="desk-actions">
                 <button class="btn btn-secondary btn-sm" disabled>
-                  {{ getDeskAvailabilityStatus(desk).status === 'system-disabled' ? 'Disabled' : 'Not Available' }}
+                  {{ getDeskAvailabilityStatus(desk).status === 'system-disabled' ? 'Booked' : 'Not Available' }}
                 </button>
                 <button class="btn btn-outline btn-sm">View Details</button>
               </td>
