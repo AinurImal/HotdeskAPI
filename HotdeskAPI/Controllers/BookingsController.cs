@@ -1,123 +1,144 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HotdeskAPI.Data;                    // Import database context
-using Hotdesk.Components.Models;         // Import Desk and Booking models
-using Hotdesk.Models;                    // Import User model
+﻿using System; // For base types like DateTime, Exception, etc.
+using System.Collections.Generic; // For List<T>, IEnumerable<T>
+using System.Linq; // For LINQ queries
+using System.Threading.Tasks; // For async/await
+using Microsoft.AspNetCore.Http; // For StatusCodes
+using Microsoft.AspNetCore.Mvc; // For ControllerBase, ActionResult, etc.
+using Microsoft.EntityFrameworkCore; // For EF Core features
+using HotdeskAPI.Data; // For HotdeskAPIContext
+using Hotdesk.Models; // For Booking model
 
-namespace HotdeskAPI.Controllers
+namespace HotdeskAPI.Controllers // Namespace for API controllers
 {
-    [Route("api/[controller]")]          // Route: api/Bookings
-    [ApiController]                      // Enables automatic API behavior (model binding, validation, etc.)
-    public class BookingsController(HotdeskAPIContext context) : ControllerBase //Declares a controller class
-                                                                                //injecting the database context via constructor
-                                                                                //Inherits from ControllerBase to provide API-specific functionality
+    [Route("api/[controller]")] // Route: api/Bookings
+    [ApiController] // Enables API-specific behaviors (model validation, etc.)
+    public class BookingsController : ControllerBase // Controller for booking endpoints
     {
-        private readonly HotdeskAPIContext _context = context; // Stores DB for internal use 
+        private readonly HotdeskAPIContext _context; // Database context
+
+        public BookingsController(HotdeskAPIContext context) // Constructor with DI for context
+        {
+            _context = context; // Assign context to private field
+        }
 
         // GET: api/Bookings
-        [HttpGet]
+        [HttpGet] // Handles GET requests to api/Bookings
         public async Task<ActionResult<IEnumerable<Booking>>> GetBookings()
         {
-            // Get all bookings and include related desk data
+            // Return all bookings, including related desk info
             return await _context.Booking
-                .Include(b => b.Desk)    // Eager load Desk related to each booking
-                .ToListAsync();          // Convert result to list asynchronously
+                .Include(b => b.Desk) // Eager load Desk navigation property
+                .ToListAsync(); // Execute query asynchronously
         }
 
-        // GET: api/Bookings/by id
-        [HttpGet("{id}")] // Maps this method to GET requests with a parameter (e.g., /api/bookings/5)
-        public async Task<ActionResult<Booking>> GetBooking(int id) // Asynchronous method that returns a Booking object wrapped in an HTTP response
+        // GET: api/Bookings/5
+        [HttpGet("{id}")] // Handles GET requests to api/Bookings/{id}
+        public async Task<ActionResult<Booking>> GetBooking(int id)
         {
-            // Query the database to find a booking with the specified BookingId
-            // Include the related Desk data (eager loading) in the result
+            // Find booking by ID, including related desk info
             var booking = await _context.Booking
-                .Include(b => b.Desk) // Include the desk details related to the booking
-                .FirstOrDefaultAsync(b => b.BookingId == id); // Get the first booking that matches the given ID, or null if none found
+                .Include(b => b.Desk) // Eager load Desk navigation property
+                .FirstOrDefaultAsync(b => b.BookingId == id); // Find booking by ID
 
-            if (booking == null) // Check if no booking was found
+            if (booking == null) // If not found
             {
-                return NotFound(); // Return HTTP 404 Not Found if the booking does not exist
+                return NotFound(); // Return 404 Not Found
             }
 
-            return booking; // Return the booking object with HTTP 200 OK
+            return booking; // Return booking
         }
 
-
         // POST: api/Bookings
-        [HttpPost]
+        [HttpPost] // Handles POST requests to api/Bookings
         public async Task<ActionResult<Booking>> PostBooking(Booking booking)
         {
-            // Validate that the UserName is not empty
+            // Validate DeskId
+            if (booking.DeskId < 1)
+                return BadRequest(new { Message = "DeskId is required." }); // Return 400 if missing
+
+            // Validate UserName
             if (string.IsNullOrWhiteSpace(booking.UserName))
                 return BadRequest(new { Message = "UserName is required." }); // Return 400 if missing
 
-            // Check if user exists in database
-            var user = await _context.User.FirstOrDefaultAsync(u => u.UserName == booking.UserName);
-            if (user == null)
-                return BadRequest(new { Message = "UserName does not exist. Please register the user first." });
+            // Validate BookingDate
+            if (booking.BookingDate == default)
+                return BadRequest(new { Message = "BookingDate is required." }); // Return 400 if missing
 
-            // Check if the specified desk exists
-            var desk = await _context.Desk.FirstOrDefaultAsync(d => d.DeskId == booking.DeskId);
-            if (desk == null)
-                return BadRequest(new { Message = "Desk does not exist." }); // Return 400 if desk not found
+            // Begin a transaction for consistency
+            using var transaction = await _context.Database.BeginTransactionAsync(); // Start transaction
+            try
+            {
+                // Check if the desk is already booked for the given date
+                bool isBooked = await _context.Booking
+                    .AnyAsync(b => b.DeskId == booking.DeskId && b.BookingDate.Date == booking.BookingDate.Date); // Check for existing booking
 
-            _context.Booking.Add(booking);             // Add new booking
-            await _context.SaveChangesAsync();         // Save changes to database
+                if (isBooked) // If already booked
+                {
+                    await transaction.RollbackAsync(); // Rollback transaction
+                    return Conflict(new { Message = "The desk is already booked, please book another desk." }); // Return 409 Conflict
+                }
 
-            // Return 201 Created with location header pointing to the new booking
-            return CreatedAtAction(nameof(GetBooking), new { id = booking.BookingId }, booking);
+                _context.Booking.Add(booking); // Add new booking to context
+                await _context.SaveChangesAsync(); // Save changes to database
+                await transaction.CommitAsync(); // Commit transaction
+
+                // Return 201 Created with the new booking
+                return CreatedAtAction(nameof(GetBooking), new { id = booking.BookingId }, booking); // Return created booking
+            }
+            catch (Exception ex) // Catch any exception
+            {
+                await transaction.RollbackAsync(); // Rollback transaction
+                // Return 500 Internal Server Error with error message
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred.", Error = ex.Message });
+            }
         }
 
         // PUT: api/Bookings/5
-        [HttpPut("{id}")]
+        [HttpPut("{id}")] // Handles PUT requests to api/Bookings/{id}
         public async Task<IActionResult> PutBooking(int id, Booking booking)
         {
-            if (id != booking.BookingId)
-                return BadRequest(); // Return 400 if route ID doesn't match booking ID
+            if (id != booking.BookingId) // Check if ID matches
+                return BadRequest(); // Return 400 if not
 
-            _context.Entry(booking).State = EntityState.Modified; // Mark booking entity as modified
+            _context.Entry(booking).State = EntityState.Modified; // Mark as modified
 
             try
             {
-                await _context.SaveChangesAsync(); // Try saving changes
+                await _context.SaveChangesAsync(); // Save changes
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException) // Handle concurrency issues
             {
-                if (!BookingExists(id))            // If booking no longer exists, return 404
-                    return NotFound();
+                if (!BookingExists(id)) // If booking no longer exists
+                    return NotFound(); // Return 404
                 else
-                    throw;                         // Otherwise, rethrow the error
+                    throw; // Rethrow exception
             }
 
-            return NoContent(); // Return 204 No Content on successful update
+            return NoContent(); // Return 204 No Content
         }
 
         // DELETE: api/Bookings/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}")] // Handles DELETE requests to api/Bookings/{id}
         public async Task<IActionResult> DeleteBooking(int id)
         {
             var booking = await _context.Booking.FindAsync(id); // Find booking by ID
-            if (booking == null)
-                return NotFound(); // Return 404 if not found
+            if (booking == null) // If not found
+                return NotFound(); // Return 404
 
-            _context.Booking.Remove(booking);       // Remove the booking
-            await _context.SaveChangesAsync();      // Save changes to database
+            _context.Booking.Remove(booking); // Remove booking
+            await _context.SaveChangesAsync(); // Save changes
 
-            return NoContent();                     // Return 204 No Content
+            return NoContent(); // Return 204 No Content
         }
 
+        // Helper method to check if a booking exists by ID
         private bool BookingExists(int id)
         {
-            // Check if booking with given ID exists
-            return _context.Booking.Any(e => e.BookingId == id);
+            return _context.Booking.Any(e => e.BookingId == id); // Return true if booking exists
         }
     }
 }
+
 
 
 
