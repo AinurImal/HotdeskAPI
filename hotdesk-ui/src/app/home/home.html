@@ -1,0 +1,103 @@
+<div class="home-layout">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Hotdesk</span>
+    </div>
+    <ul>
+      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">🏠 Home</a></li>
+      <li><a routerLink="/user" routerLinkActive="active">👤 Users</a></li>
+      <!-- Expandable Desk Navigation -->
+      <li class="nav-item-expandable">
+        <div class="nav-header" (click)="toggleDeskNav()">
+          <span class="nav-link">🪑 Desks</span>
+          <span class="expand-icon" [class.expanded]="isDeskNavExpanded">▼</span>
+        </div>
+        <ul *ngIf="isDeskNavExpanded" class="sub-nav">
+          <li><a routerLink="/desk" routerLinkActive="active">⚙️ Desk Management</a></li>
+          <li><a routerLink="/desk-availability" routerLinkActive="active">📊 Desk Availability</a></li>
+        </ul>
+      </li>
+      <li><a routerLink="/booking" routerLinkActive="active">📅 Bookings</a></li>
+      <li><a routerLink="/bookfinder" routerLinkActive="active">🔍 Booking Finder</a></li>
+    </ul>
+  </nav>
+  
+  <main class="content-area">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <h1>Welcome to Hotdesk Dashboard</h1>
+      <p class="dashboard-subtitle">Manage your workspace bookings and desk availability</p>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-icon">🪑</div>
+        <div class="stat-content">
+          <h3>{{ totalDesks }}</h3>
+          <p>Total Desks</p>
+        </div>
+      </div>
+      
+      <div class="stat-card available">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <h3>{{ availableDesks }}</h3>
+          <p>Available Desks</p>
+        </div>
+      </div>
+      
+      <div class="stat-card booked">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <h3>{{ totalBookings }}</h3>
+          <p>Active Bookings</p>
+        </div>
+      </div>
+      
+      <div class="stat-card users">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <h3>{{ totalUsers }}</h3>
+          <p>Registered Users</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="quick-actions-section">
+      <h2>Quick Actions</h2>
+      <div class="action-cards">
+        <div class="action-card" routerLink="/booking">
+          <div class="action-icon">📝</div>
+          <h3>New Booking</h3>
+          <p>Book a desk for today or future dates</p>
+        </div>
+        
+        <div class="action-card" routerLink="/desk-availability">
+          <div class="action-icon">📊</div>
+          <h3>Check Availability</h3>
+          <p>View real-time desk availability</p>
+        </div>
+        
+        <div class="action-card" routerLink="/desk">
+          <div class="action-icon">⚙️</div>
+          <h3>Manage Desks</h3>
+          <p>Add or modify desk information</p>
+        </div>
+        
+        <div class="action-card" routerLink="/bookfinder">
+          <div class="action-icon">🔍</div>
+          <h3>Find Bookings</h3>
+          <p>Search and filter existing bookings</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Loading dashboard data...</p>
+    </div>
+  </main>
+</div>

@@ -23,62 +23,128 @@
   </nav>
   <main class="content-area">
     <h1>Desk Availability</h1>
+    <p *ngIf="selectedDate" class="availability-date">
+      Showing availability for: <strong>{{ formatDateForDisplay(selectedDate) }}</strong>
+    </p>
 
     <!-- Loading indicator -->
     <div *ngIf="isLoading" class="loading">
       <div class="loading-spinner"></div>
-      <p>Loading desk availability...</p>
+      <p>Loading desk availability from HotdeskAPI...</p>
     </div>
 
-    <!-- Error message -->
-    <div *ngIf="errorMessage" class="error-message">
-      <p>{{ errorMessage }}</p>
-      <button class="btn btn-secondary" (click)="errorMessage = ''">Dismiss</button>
+    <!-- Success message -->
+    <div *ngIf="successMessage" class="success-message">
+      <div class="success-icon">✅</div>
+      <div class="success-content">
+        <p>{{ successMessage }}</p>
+      </div>
+      <button (click)="successMessage = ''" class="btn btn-sm btn-clear">×</button>
+    </div>
+
+    <!-- Error message with enhanced error handling -->
+    <div *ngIf="errorMessage" class="error-container">
+      <!-- Connection Error -->
+      <div *ngIf="errorMessage.includes('Connection Error')" class="error-message connection-error">
+        <div class="error-icon">🔌</div>
+        <div class="error-content">
+          <h4>Connection Problem</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please check if the HotdeskAPI server is running and try again.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Data Error -->
+      <div *ngIf="errorMessage.includes('Data Error')" class="error-message validation-error">
+        <div class="error-icon">⚠️</div>
+        <div class="error-content">
+          <h4>Data Validation Failed</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please try refreshing the page or contact support.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
+      
+      <!-- Generic Error -->
+      <div *ngIf="!errorMessage.includes('Connection Error') && !errorMessage.includes('Data Error')" class="error-message generic-error">
+        <div class="error-icon">❌</div>
+        <div class="error-content">
+          <h4>Operation Failed</h4>
+          <p>{{ errorMessage }}</p>
+          <p class="error-suggestion">Please try again or contact support if the problem persists.</p>
+        </div>
+        <button (click)="errorMessage = ''" class="btn btn-sm btn-clear">×</button>
+      </div>
     </div>
 
     <!-- Filter Section -->
     <div class="filter-section">
-      <h2>Filter Desks</h2>
+      <div class="section-header">
+        <h2>Filter Desks by Date and Criteria</h2>
+        <div *ngIf="hasActiveFilters()" class="active-filters-indicator">
+          <span class="filter-badge">Filters Active</span>
+        </div>
+      </div>
       <div class="filter-controls">
         <div class="filter-group">
-          <label for="searchTerm">Search by Name or Location:</label>
+          <label for="selectedDate">Select Date:</label>
+          <input 
+            type="date" 
+            id="selectedDate" 
+            [(ngModel)]="selectedDate"
+            (change)="onDateChange()"
+            class="form-control"
+            [disabled]="isLoading">
+        </div>
+        
+        <div class="filter-group">
+          <label for="searchTerm">Search by Name, Location, or Description:</label>
           <input 
             type="text" 
             id="searchTerm" 
             [(ngModel)]="searchTerm"
             placeholder="Search desks..."
-            class="form-control">
+            class="form-control"
+            [disabled]="isLoading">
         </div>
         
         <div class="filter-group">
           <label for="location">Filter by Location:</label>
-          <select id="location" [(ngModel)]="selectedLocation" class="form-control">
-            <option value="">All Locations</option>
+          <select id="location" [(ngModel)]="selectedLocation" class="form-control" [disabled]="isLoading">
+            <option value="">All Locations ({{ locations.length }} available)</option>
             <option *ngFor="let location of locations" [value]="location">{{ location }}</option>
           </select>
         </div>
         
         <div class="filter-group">
           <label class="checkbox-label">
-            <input type="checkbox" [(ngModel)]="showMonitorOnly">
+            <input type="checkbox" [(ngModel)]="showMonitorOnly" [disabled]="isLoading">
             Show only desks with monitors
           </label>
         </div>
         
         <div class="filter-actions">
-          <button class="btn btn-secondary" (click)="resetFilters()">Clear Filters</button>
-          <button class="btn btn-primary" (click)="refreshDesks()">Refresh</button>
+          <button class="btn btn-secondary" (click)="resetFilters()" [disabled]="isLoading || !hasActiveFilters()">
+            Clear Filters
+          </button>
+          <button class="btn btn-primary" (click)="refreshDesks()" [disabled]="isLoading">
+            {{ isLoading ? 'Loading...' : 'Refresh Data' }}
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Summary Stats -->
-    <div class="stats-section">
+    <!-- Summary Stats with API Validation -->
+    <div class="stats-section" *ngIf="isDataLoaded()">
       <div class="stat-card available">
         <div class="stat-icon">✅</div>
         <div class="stat-info">
           <h3>{{ getFilteredDesks(availableDesks).length }}</h3>
           <p>Available Desks</p>
+          <small *ngIf="hasActiveFilters()" class="filtered-count">
+            ({{ getDeskCountByStatus('available') }} total)
+          </small>
         </div>
       </div>
       
@@ -87,6 +153,9 @@
         <div class="stat-info">
           <h3>{{ getFilteredDesks(unavailableDesks).length }}</h3>
           <p>Unavailable Desks</p>
+          <small *ngIf="hasActiveFilters()" class="filtered-count">
+            ({{ getDeskCountByStatus('unavailable') }} total)
+          </small>
         </div>
       </div>
       
@@ -95,6 +164,17 @@
         <div class="stat-info">
           <h3>{{ getFilteredDesks(desks).length }}</h3>
           <p>Total Desks</p>
+          <small *ngIf="hasActiveFilters()" class="filtered-count">
+            ({{ getDeskCountByStatus('total') }} total)
+          </small>
+        </div>
+      </div>
+      
+      <div class="stat-card monitor">
+        <div class="stat-icon">🖥️</div>
+        <div class="stat-info">
+          <h3>{{ getFilteredDesks(getDesksWithMonitors()).length }}</h3>
+          <p>With Monitors</p>
         </div>
       </div>
     </div>
@@ -109,25 +189,40 @@
         <p>No available desks found matching your criteria.</p>
       </div>
       
-      <div *ngIf="getFilteredDesks(availableDesks).length > 0" class="desk-grid">
-        <div *ngFor="let desk of getFilteredDesks(availableDesks)" class="desk-card available-desk">
-          <div class="desk-header">
-            <h3>{{ desk.name }}</h3>
-            <span class="desk-status available">Available</span>
-          </div>
-          <div class="desk-details">
-            <p><strong>📍 Location:</strong> {{ desk.location }}</p>
-            <p><strong>🆔 Desk ID:</strong> {{ desk.deskId }}</p>
-            <p class="monitor-status">{{ getMonitorStatus(desk) }}</p>
-            <p *ngIf="desk.description" class="desk-description">
-              <strong>📝 Description:</strong> {{ desk.description }}
-            </p>
-          </div>
-          <div class="desk-actions">
-            <button class="btn btn-primary btn-sm" routerLink="/booking">Book Now</button>
-            <button class="btn btn-outline btn-sm">View Details</button>
-          </div>
-        </div>
+      <div *ngIf="getFilteredDesks(availableDesks).length > 0" class="desk-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Desk ID</th>
+              <th>Desk Name</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Monitor</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let desk of getFilteredDesks(availableDesks)" class="desk-row available-row">
+              <td class="desk-id">{{ desk.deskId }}</td>
+              <td class="desk-name">{{ desk.name }}</td>
+              <td class="desk-location">{{ desk.location }}</td>
+              <td>
+                <span class="desk-status available">Available</span>
+              </td>
+              <td class="monitor-status">
+                <span [class]="desk.hasMonitor ? 'has-monitor' : 'no-monitor'">
+                  {{ desk.hasMonitor ? '🖥️ Yes' : '❌ No' }}
+                </span>
+              </td>
+              <td class="desk-description">{{ desk.description || 'No description' }}</td>
+              <td class="desk-actions">
+                <button class="btn btn-primary btn-sm" routerLink="/booking">Book Now</button>
+                <button class="btn btn-outline btn-sm">View Details</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -141,25 +236,40 @@
         <p>No unavailable desks found matching your criteria.</p>
       </div>
       
-      <div *ngIf="getFilteredDesks(unavailableDesks).length > 0" class="desk-grid">
-        <div *ngFor="let desk of getFilteredDesks(unavailableDesks)" class="desk-card unavailable-desk">
-          <div class="desk-header">
-            <h3>{{ desk.name }}</h3>
-            <span class="desk-status unavailable">Unavailable</span>
-          </div>
-          <div class="desk-details">
-            <p><strong>📍 Location:</strong> {{ desk.location }}</p>
-            <p><strong>🆔 Desk ID:</strong> {{ desk.deskId }}</p>
-            <p class="monitor-status">{{ getMonitorStatus(desk) }}</p>
-            <p *ngIf="desk.description" class="desk-description">
-              <strong>📝 Description:</strong> {{ desk.description }}
-            </p>
-          </div>
-          <div class="desk-actions">
-            <button class="btn btn-secondary btn-sm" disabled>Not Available</button>
-            <button class="btn btn-outline btn-sm">View Details</button>
-          </div>
-        </div>
+      <div *ngIf="getFilteredDesks(unavailableDesks).length > 0" class="desk-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Desk ID</th>
+              <th>Desk Name</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Monitor</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let desk of getFilteredDesks(unavailableDesks)" class="desk-row unavailable-row">
+              <td class="desk-id">{{ desk.deskId }}</td>
+              <td class="desk-name">{{ desk.name }}</td>
+              <td class="desk-location">{{ desk.location }}</td>
+              <td>
+                <span class="desk-status unavailable">Unavailable</span>
+              </td>
+              <td class="monitor-status">
+                <span [class]="desk.hasMonitor ? 'has-monitor' : 'no-monitor'">
+                  {{ desk.hasMonitor ? '🖥️ Yes' : '❌ No' }}
+                </span>
+              </td>
+              <td class="desk-description">{{ desk.description || 'No description' }}</td>
+              <td class="desk-actions">
+                <button class="btn btn-secondary btn-sm" disabled>Not Available</button>
+                <button class="btn btn-outline btn-sm">View Details</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>

@@ -37,6 +37,14 @@ export class DeskService {
       );
   }
 
+  // GET - Check desk availability for a specific date
+  checkDeskAvailability(deskId: number, date: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${deskId}/availability?date=${encodeURIComponent(date)}`)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
   // POST - Create a new desk
   createDesk(desk: CreateDeskRequest): Observable<Desk> {
     return this.http.post<Desk>(this.apiUrl, desk)
