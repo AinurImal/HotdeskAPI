@@ -31,6 +31,9 @@ export class UserComponent implements OnInit {
   // Boolean flag to track if we're in edit mode vs create mode
   isEditing = false;
 
+  // Navigation expansion state
+  isDeskNavExpanded = false; // Default to collapsed since we're not on a desk page
+
   // Form data object for creating new users
   newUser: CreateUserRequest = {
     fullName: '',     // Bound to full name input field
@@ -53,6 +56,11 @@ export class UserComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+  }
+
+  // Toggle desk navigation expansion
+  toggleDeskNav(): void {
+    this.isDeskNavExpanded = !this.isDeskNavExpanded;
   }
 
   // Load all users from the API

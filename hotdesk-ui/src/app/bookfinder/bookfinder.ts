@@ -21,6 +21,9 @@ export class BookFinderComponent implements OnInit {
   successMessage = '';
   hasSearched = false;
   
+  // Navigation expansion state
+  isDeskNavExpanded = false; // Default to collapsed since we're not on a desk page
+  
   // Pagination properties
   currentPage = 1;
   pageSize = 10;
@@ -42,6 +45,11 @@ export class BookFinderComponent implements OnInit {
 
   ngOnInit(): void {
     // Component initialized - waiting for user to search
+  }
+
+  // Toggle desk navigation expansion
+  toggleDeskNav(): void {
+    this.isDeskNavExpanded = !this.isDeskNavExpanded;
   }
 
   /**

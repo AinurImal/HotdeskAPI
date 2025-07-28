@@ -4,10 +4,20 @@
       <span class="sidebar-title">Hotdesk</span>
     </div>
     <ul>
-      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">🏠 Home</a></li>
-      <li><a routerLink="/booking" routerLinkActive="active">📅 Bookings</a></li>
-      <li><a routerLink="/desk" routerLinkActive="active">🪑 Desks</a></li>
+       <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">🏠 Home</a></li>
       <li><a routerLink="/user" routerLinkActive="active">👤 Users</a></li>
+      <!-- Expandable Desk Navigation -->
+      <li class="nav-item-expandable">
+        <div class="nav-header" (click)="toggleDeskNav()">
+          <span class="nav-link">🪑 Desks</span>
+          <span class="expand-icon" [class.expanded]="isDeskNavExpanded">▼</span>
+        </div>
+        <ul *ngIf="isDeskNavExpanded" class="sub-nav">
+          <li><a routerLink="/desk" routerLinkActive="active">⚙️ Desk Management</a></li>
+          <li><a routerLink="/desk-availability" routerLinkActive="active">📊 Desk Availability</a></li>
+        </ul>
+      </li>
+      <li><a routerLink="/booking" routerLinkActive="active">📅 Bookings</a></li>
       <li><a routerLink="/bookfinder" routerLinkActive="active">🔍 Booking Finder</a></li>
     </ul>
   </nav>

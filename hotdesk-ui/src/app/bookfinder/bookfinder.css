@@ -1,5 +1,72 @@
 /* BookFinder Component Styles */
 
+/* Expandable Navigation Styles */
+.nav-item-expandable {
+  position: relative;
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #fff;
+  transition: background-color 0.3s ease;
+  border-radius: 4px;
+  font-size: 1.08rem;
+}
+
+.nav-header:hover {
+  background-color: rgba(238, 187, 195, 0.1);
+}
+
+.nav-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.expand-icon {
+  transition: transform 0.3s ease;
+  font-size: 12px;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.sub-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sub-nav li {
+  margin: 0;
+}
+
+.sub-nav a {
+  display: block;
+  padding: 8px 16px 8px 32px;
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.sub-nav a:hover {
+  background-color: rgba(238, 187, 195, 0.2);
+}
+
+.sub-nav a.active {
+  background-color: #eebbc3;
+  color: #232946;
+  font-weight: 600;
+}
+
 /* Container and Layout */
 .home-layout {
   display: flex;
