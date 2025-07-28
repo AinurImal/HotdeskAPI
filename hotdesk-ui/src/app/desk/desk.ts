@@ -20,6 +20,9 @@ export class DeskComponent implements OnInit {
   errorMessage: string = '';
   successMessage: string = '';
   isLoading = false;
+  
+  // Navigation expansion state
+  isDeskNavExpanded = true; // Default to expanded since we're on a desk page
 
   constructor(
     private deskService: DeskService,
@@ -57,6 +60,16 @@ export class DeskComponent implements OnInit {
         console.error('Error loading desks:', error);
       }
     });
+  }
+
+  // Toggle desk navigation expansion
+  toggleDeskNav(): void {
+    this.isDeskNavExpanded = !this.isDeskNavExpanded;
+  }
+
+  // Get only available desks for display
+  getAvailableDesks(): Desk[] {
+    return this.desks.filter(desk => desk.isAvailable);
   }
 
   // Submit form to either create new desk or update existing desk

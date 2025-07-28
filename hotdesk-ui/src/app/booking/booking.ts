@@ -26,6 +26,9 @@ export class BookingComponent implements OnInit {
   
   // Duration type options
   durationTypes = DURATION_TYPES;
+  
+  // Navigation expansion state
+  isDeskNavExpanded = false; // Default to collapsed on booking page
 
   constructor(
     private fb: FormBuilder,
@@ -38,6 +41,13 @@ export class BookingComponent implements OnInit {
   ngOnInit(): void {
     this.loadBookings();
     this.loadDesks();
+  }
+
+  /**
+   * Toggle desk navigation expansion
+   */
+  toggleDeskNav(): void {
+    this.isDeskNavExpanded = !this.isDeskNavExpanded;
   }
 
   /**

@@ -1,0 +1,166 @@
+<div class="home-layout">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Hotdesk</span>
+    </div>
+    <ul>
+      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">🏠 Home</a></li>
+      <li><a routerLink="/user" routerLinkActive="active">👤 Users</a></li>
+      <!-- Expandable Desk Navigation -->
+      <li class="nav-item-expandable">
+        <div class="nav-header" (click)="toggleDeskNav()">
+          <span class="nav-link">🪑 Desks</span>
+          <span class="expand-icon" [class.expanded]="isDeskNavExpanded">▼</span>
+        </div>
+        <ul *ngIf="isDeskNavExpanded" class="sub-nav">
+          <li><a routerLink="/desk" routerLinkActive="active">⚙️ Desk Management</a></li>
+          <li><a routerLink="/desk-availability" routerLinkActive="active">📊 Desk Availability</a></li>
+        </ul>
+      </li>
+      <li><a routerLink="/booking" routerLinkActive="active">📅 Bookings</a></li>
+      <li><a routerLink="/bookfinder" routerLinkActive="active">🔍 Booking Finder</a></li>
+    </ul>
+  </nav>
+  <main class="content-area">
+    <h1>Desk Availability</h1>
+
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading desk availability...</p>
+    </div>
+
+    <!-- Error message -->
+    <div *ngIf="errorMessage" class="error-message">
+      <p>{{ errorMessage }}</p>
+      <button class="btn btn-secondary" (click)="errorMessage = ''">Dismiss</button>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <h2>Filter Desks</h2>
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label for="searchTerm">Search by Name or Location:</label>
+          <input 
+            type="text" 
+            id="searchTerm" 
+            [(ngModel)]="searchTerm"
+            placeholder="Search desks..."
+            class="form-control">
+        </div>
+        
+        <div class="filter-group">
+          <label for="location">Filter by Location:</label>
+          <select id="location" [(ngModel)]="selectedLocation" class="form-control">
+            <option value="">All Locations</option>
+            <option *ngFor="let location of locations" [value]="location">{{ location }}</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="showMonitorOnly">
+            Show only desks with monitors
+          </label>
+        </div>
+        
+        <div class="filter-actions">
+          <button class="btn btn-secondary" (click)="resetFilters()">Clear Filters</button>
+          <button class="btn btn-primary" (click)="refreshDesks()">Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="stats-section">
+      <div class="stat-card available">
+        <div class="stat-icon">✅</div>
+        <div class="stat-info">
+          <h3>{{ getFilteredDesks(availableDesks).length }}</h3>
+          <p>Available Desks</p>
+        </div>
+      </div>
+      
+      <div class="stat-card unavailable">
+        <div class="stat-icon">❌</div>
+        <div class="stat-info">
+          <h3>{{ getFilteredDesks(unavailableDesks).length }}</h3>
+          <p>Unavailable Desks</p>
+        </div>
+      </div>
+      
+      <div class="stat-card total">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+          <h3>{{ getFilteredDesks(desks).length }}</h3>
+          <p>Total Desks</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Available Desks Section -->
+    <div class="desk-section">
+      <div class="section-header">
+        <h2>Available Desks ({{ getFilteredDesks(availableDesks).length }})</h2>
+      </div>
+      
+      <div *ngIf="getFilteredDesks(availableDesks).length === 0" class="no-data">
+        <p>No available desks found matching your criteria.</p>
+      </div>
+      
+      <div *ngIf="getFilteredDesks(availableDesks).length > 0" class="desk-grid">
+        <div *ngFor="let desk of getFilteredDesks(availableDesks)" class="desk-card available-desk">
+          <div class="desk-header">
+            <h3>{{ desk.name }}</h3>
+            <span class="desk-status available">Available</span>
+          </div>
+          <div class="desk-details">
+            <p><strong>📍 Location:</strong> {{ desk.location }}</p>
+            <p><strong>🆔 Desk ID:</strong> {{ desk.deskId }}</p>
+            <p class="monitor-status">{{ getMonitorStatus(desk) }}</p>
+            <p *ngIf="desk.description" class="desk-description">
+              <strong>📝 Description:</strong> {{ desk.description }}
+            </p>
+          </div>
+          <div class="desk-actions">
+            <button class="btn btn-primary btn-sm" routerLink="/booking">Book Now</button>
+            <button class="btn btn-outline btn-sm">View Details</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unavailable Desks Section -->
+    <div class="desk-section">
+      <div class="section-header">
+        <h2>Unavailable Desks ({{ getFilteredDesks(unavailableDesks).length }})</h2>
+      </div>
+      
+      <div *ngIf="getFilteredDesks(unavailableDesks).length === 0" class="no-data">
+        <p>No unavailable desks found matching your criteria.</p>
+      </div>
+      
+      <div *ngIf="getFilteredDesks(unavailableDesks).length > 0" class="desk-grid">
+        <div *ngFor="let desk of getFilteredDesks(unavailableDesks)" class="desk-card unavailable-desk">
+          <div class="desk-header">
+            <h3>{{ desk.name }}</h3>
+            <span class="desk-status unavailable">Unavailable</span>
+          </div>
+          <div class="desk-details">
+            <p><strong>📍 Location:</strong> {{ desk.location }}</p>
+            <p><strong>🆔 Desk ID:</strong> {{ desk.deskId }}</p>
+            <p class="monitor-status">{{ getMonitorStatus(desk) }}</p>
+            <p *ngIf="desk.description" class="desk-description">
+              <strong>📝 Description:</strong> {{ desk.description }}
+            </p>
+          </div>
+          <div class="desk-actions">
+            <button class="btn btn-secondary btn-sm" disabled>Not Available</button>
+            <button class="btn btn-outline btn-sm">View Details</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

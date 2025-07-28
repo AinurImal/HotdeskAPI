@@ -1,3 +1,68 @@
+/* Expandable Navigation Styles */
+.nav-item-expandable {
+  position: relative;
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #fff;
+  transition: background-color 0.3s ease;
+  border-radius: 4px;
+  font-size: 1.08rem;
+}
+
+.nav-header:hover {
+  background-color: rgba(238, 187, 195, 0.1);
+}
+
+.nav-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.expand-icon {
+  transition: transform 0.3s ease;
+  font-size: 12px;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.sub-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: rgba(35, 41, 70, 0.5);
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.sub-nav li {
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.sub-nav a {
+  display: block;
+  padding: 8px 16px 8px 24px;
+  color: #eebbc3;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease;
+  border-radius: 4px;
+  margin: 2px 4px;
+}
+
+.sub-nav a:hover,
+.sub-nav a.active {
+  background-color: rgba(238, 187, 195, 0.2);
+}
+
 /* Sidebar Styles */
 .home-layout {
   display: flex;

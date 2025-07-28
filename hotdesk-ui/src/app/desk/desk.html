@@ -5,9 +5,19 @@
     </div>
     <ul>
       <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">🏠 Home</a></li>
-      <li><a routerLink="/booking" routerLinkActive="active">📅 Bookings</a></li>
-      <li><a routerLink="/desk" routerLinkActive="active">🪑 Desks</a></li>
-      <li><a routerLink="/user" routerLinkActive="active">👤 Users</a></li>
+      <li><a routerLink="/user" routerLinkActive="active">� Users</a></li>
+      <!-- Expandable Desk Navigation -->
+      <li class="nav-item-expandable">
+        <div class="nav-header" (click)="toggleDeskNav()">
+          <span class="nav-link">🪑 Desks</span>
+          <span class="expand-icon" [class.expanded]="isDeskNavExpanded">▼</span>
+        </div>
+        <ul *ngIf="isDeskNavExpanded" class="sub-nav">
+          <li><a routerLink="/desk" routerLinkActive="active">⚙️ Desk Management</a></li>
+          <li><a routerLink="/desk-availability" routerLinkActive="active">📊 Desk Availability</a></li>
+        </ul>
+      </li>
+      <li><a routerLink="/booking" routerLinkActive="active">� Bookings</a></li>
       <li><a routerLink="/bookfinder" routerLinkActive="active">🔍 Booking Finder</a></li>
     </ul>
   </nav>
@@ -165,7 +175,7 @@
     <!-- Desks List -->
     <div class="users-section">
       <div class="section-header">
-        <h2>All Desks ({{ desks.length }})</h2>
+        <h2>Available Desks ({{ getAvailableDesks().length }} of {{ desks.length }} total)</h2>
         <div class="header-actions">
           <button (click)="loadDesks()" class="btn btn-secondary" [disabled]="isLoading">
             {{ isLoading ? 'Loading...' : 'Refresh' }}
@@ -180,11 +190,11 @@
         </div>
       </div>
       
-      <div *ngIf="desks.length === 0 && !isLoading" class="no-data">
-        <p>No desks found. Create your first desk using the form above.</p>
+      <div *ngIf="getAvailableDesks().length === 0 && !isLoading" class="no-data">
+        <p>No available desks found. All desks are currently unavailable or create your first desk using the form above.</p>
       </div>
 
-      <div *ngIf="desks.length > 0" class="users-table">
+      <div *ngIf="getAvailableDesks().length > 0" class="users-table">
         <table class="table">
           <thead>
             <tr>
@@ -198,14 +208,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let desk of desks" [class.editing]="editingDeskId === desk.deskId">
+            <tr *ngFor="let desk of getAvailableDesks()" [class.editing]="editingDeskId === desk.deskId">
               <td class="desk-id">{{ desk.deskId }}</td>
               <td class="desk-name">{{ desk.name }}</td>
               <td>{{ desk.location }}</td>
               <td>
-                <span [class]="desk.isAvailable ? 'status-available' : 'status-unavailable'">
-                  {{ desk.isAvailable ? 'Available' : 'Unavailable' }}
-                </span>
+                <span class="status-available">Available</span>
               </td>
               <td class="equipment">
                 <span [class]="desk.hasMonitor ? 'equipment-item' : 'no-equipment'">
