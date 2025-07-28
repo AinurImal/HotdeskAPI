@@ -131,6 +131,12 @@
           <button class="btn btn-primary" (click)="refreshDesks()" [disabled]="isLoading">
             {{ isLoading ? 'Loading...' : 'Refresh Data' }}
           </button>
+          <button class="btn btn-outline" (click)="showSystemAvailabilityOnly()" [disabled]="isLoading">
+            Show System Status Only
+          </button>
+          <button class="btn btn-info" (click)="checkJuly28Bookings()" [disabled]="isLoading">
+            Check July 28, 2025 (Booking Date)
+          </button>
         </div>
       </div>
     </div>
@@ -208,7 +214,10 @@
               <td class="desk-name">{{ desk.name }}</td>
               <td class="desk-location">{{ desk.location }}</td>
               <td>
-                <span class="desk-status available">Available</span>
+                <span [ngClass]="getDeskAvailabilityStatus(desk).statusClass">
+                  ✅ {{ getDeskAvailabilityStatus(desk).statusText }}
+                </span>
+                <small class="system-status">System: {{ desk.isAvailable ? 'Enabled' : 'Disabled' }}</small>
               </td>
               <td class="monitor-status">
                 <span [class]="desk.hasMonitor ? 'has-monitor' : 'no-monitor'">
@@ -255,7 +264,11 @@
               <td class="desk-name">{{ desk.name }}</td>
               <td class="desk-location">{{ desk.location }}</td>
               <td>
-                <span class="desk-status unavailable">Unavailable</span>
+                <span [ngClass]="getDeskAvailabilityStatus(desk).statusClass">
+                  {{ getDeskAvailabilityStatus(desk).status === 'system-disabled' ? '🚫' : '❌' }} 
+                  {{ getDeskAvailabilityStatus(desk).statusText }}
+                </span>
+                <small class="system-status">System: {{ desk.isAvailable ? 'Enabled' : 'Disabled' }}</small>
               </td>
               <td class="monitor-status">
                 <span [class]="desk.hasMonitor ? 'has-monitor' : 'no-monitor'">
@@ -264,7 +277,9 @@
               </td>
               <td class="desk-description">{{ desk.description || 'No description' }}</td>
               <td class="desk-actions">
-                <button class="btn btn-secondary btn-sm" disabled>Not Available</button>
+                <button class="btn btn-secondary btn-sm" disabled>
+                  {{ getDeskAvailabilityStatus(desk).status === 'system-disabled' ? 'Disabled' : 'Not Available' }}
+                </button>
                 <button class="btn btn-outline btn-sm">View Details</button>
               </td>
             </tr>

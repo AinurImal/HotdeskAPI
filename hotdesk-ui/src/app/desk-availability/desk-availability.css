@@ -676,6 +676,20 @@
   color: #721c24;
 }
 
+.desk-status.system-disabled {
+  background: #6c757d;
+  color: #fff;
+}
+
+/* System status indicator */
+.system-status {
+  display: block;
+  font-size: 0.7rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 2px;
+}
+
 .monitor-status .has-monitor {
   color: #28a745;
   font-weight: 600;

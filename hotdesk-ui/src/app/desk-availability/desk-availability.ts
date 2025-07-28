@@ -59,7 +59,8 @@ export class DeskAvailabilityComponent implements OnInit {
     ).subscribe({
       next: (allDesks) => {
         this.desks = this.validateDeskData(allDesks);
-        console.log('All Desks:', this.desks);
+        console.log('All Desks from Backend:', this.desks);
+        console.log('Desk isAvailable statuses:', this.desks.map(d => ({id: d.deskId, name: d.name, isAvailable: d.isAvailable})));
         
         // Check availability for each desk on the selected date
         this.checkDesksAvailabilityForDate();
@@ -72,54 +73,96 @@ export class DeskAvailabilityComponent implements OnInit {
   }
 
   /**
+   * Show system availability only (ignore date checking)
+   */
+  showSystemAvailabilityOnly(): void {
+    this.clearMessages();
+    
+    // Use only the system isAvailable status
+    this.availableDesks = this.desks.filter(desk => desk.isAvailable === true);
+    this.unavailableDesks = this.desks.filter(desk => desk.isAvailable === false);
+    
+    console.log('System-only Available Desks:', this.availableDesks);
+    console.log('System-only Unavailable Desks:', this.unavailableDesks);
+    
+    this.successMessage = `Showing system availability only: ${this.availableDesks.length} available, ${this.unavailableDesks.length} unavailable (ignoring date-specific bookings).`;
+  }
+
+  /**
+   * Quick test for July 28, 2025 (the date with bookings)
+   */
+  checkJuly28Bookings(): void {
+    this.selectedDate = '2025-07-28';
+    this.loadDeskAvailability();
+  }
+
+  /**
    * Check availability for each desk on the selected date
+   * Uses both the desk's base isAvailable status and date-specific availability
    */
   private checkDesksAvailabilityForDate(): void {
+    // Clear arrays first
+    this.availableDesks = [];
+    this.unavailableDesks = [];
+
     if (!this.selectedDate || this.desks.length === 0) {
-      this.availableDesks = [];
-      this.unavailableDesks = [...this.desks];
+      // If no date selected, use ONLY the base isAvailable from desk data
+      this.availableDesks = this.desks.filter(desk => desk.isAvailable === true);
+      this.unavailableDesks = this.desks.filter(desk => desk.isAvailable === false);
+      this.successMessage = `Successfully loaded ${this.desks.length} desk(s). ${this.availableDesks.length} available, ${this.unavailableDesks.length} unavailable (based on system status).`;
+      return;
+    }
+
+    // Separate desks by their base isAvailable status first
+    const baseAvailableDesks = this.desks.filter(desk => desk.isAvailable === true);
+    const baseUnavailableDesks = this.desks.filter(desk => desk.isAvailable === false);
+
+    // All desks that are marked as unavailable in the system go to unavailable list
+    this.unavailableDesks.push(...baseUnavailableDesks.map(desk => ({ ...desk, isAvailable: false })));
+
+    // If no desks are available in the system, skip date checking
+    if (baseAvailableDesks.length === 0) {
+      this.successMessage = `Successfully loaded ${this.desks.length} desk(s) for ${this.formatDateForDisplay(this.selectedDate)}. ${this.availableDesks.length} available, ${this.unavailableDesks.length} unavailable.`;
       return;
     }
 
     const dateForApi = this.formatDateForApi(this.selectedDate);
     console.log('Checking availability for date:', dateForApi);
+    console.log('Base available desks (isAvailable=true):', baseAvailableDesks);
 
-    // Check each desk's availability for the selected date
-    const availabilityChecks = this.desks.map(desk => {
+    // Check date-specific availability for each system-available desk
+    const availabilityChecks = baseAvailableDesks.map(desk => {
       return this.deskService.checkDeskAvailability(desk.deskId!, dateForApi).pipe(
         catchError(error => {
           console.error(`Error checking availability for desk ${desk.deskId}:`, error);
           // On error, assume desk is unavailable for safety
-          return of({ 
-            deskId: desk.deskId!, 
-            date: dateForApi, 
-            isAvailable: false, 
-            message: 'Error checking availability' 
-          } as DeskAvailabilityResponse);
+          return of({ DeskId: desk.deskId, IsAvailable: false });
         })
       );
     });
 
     forkJoin(availabilityChecks).subscribe({
       next: (availabilityResults) => {
-        console.log('Availability Results from API:', availabilityResults);
+        console.log('Availability Results:', availabilityResults);
         
         this.availableDesks = [];
         this.unavailableDesks = [];
 
         this.desks.forEach(desk => {
-          const availabilityResult = availabilityResults.find(result => result.deskId === desk.deskId);
-          console.log(`Desk ${desk.name} (ID: ${desk.deskId}) availability:`, availabilityResult);
-          
-          if (availabilityResult && availabilityResult.isAvailable) {
+          const availabilityResult = availabilityResults.find(result => result.DeskId === desk.deskId);
+          if (availabilityResult && availabilityResult.IsAvailable) {
             this.availableDesks.push({ ...desk, isAvailable: true });
-          } else {
+          } else if (availabilityResult && availabilityResult.IsAvailable === false) {
+            // Desk is available in system but booked for this date
             this.unavailableDesks.push({ ...desk, isAvailable: false });
+          } else {
+            // No availability result, use system status (desk.isAvailable = true)
+            this.availableDesks.push({ ...desk, isAvailable: true });
           }
         });
 
-        console.log('Available Desks:', this.availableDesks);
-        console.log('Unavailable Desks:', this.unavailableDesks);
+        console.log('Final Available Desks (system + date available):', this.availableDesks);
+        console.log('Final Unavailable Desks (system disabled OR date booked):', this.unavailableDesks);
 
         // Show detailed success message with booking information
         const bookedDesks = this.unavailableDesks.length;
@@ -128,7 +171,12 @@ export class DeskAvailabilityComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error checking desk availability:', error);
-        this.errorMessage = 'Failed to check desk availability for the selected date. Please try again.';
+        
+        // On API error, fall back to system availability status
+        this.availableDesks = baseAvailableDesks.map(desk => ({ ...desk, isAvailable: true }));
+        this.unavailableDesks = baseUnavailableDesks.map(desk => ({ ...desk, isAvailable: false }));
+        
+        this.successMessage = `Loaded ${this.desks.length} desk(s) using system availability (date check failed). ${this.availableDesks.length} available, ${this.unavailableDesks.length} unavailable.`;
       }
     });
   }
@@ -340,6 +388,41 @@ export class DeskAvailabilityComponent implements OnInit {
       month: 'long',
       day: 'numeric'
     });
+  }
+
+  /**
+   * Get desk availability status with system and date-specific info
+   */
+  getDeskAvailabilityStatus(desk: Desk): { 
+    status: 'available' | 'unavailable' | 'system-disabled', 
+    statusText: string,
+    statusClass: string 
+  } {
+    // Check if desk is disabled in the system
+    if (desk.isAvailable === false) {
+      return {
+        status: 'system-disabled',
+        statusText: 'System Disabled',
+        statusClass: 'desk-status system-disabled'
+      };
+    }
+
+    // Check if desk is in available list (both system available and date available)
+    const isInAvailableList = this.availableDesks.some(d => d.deskId === desk.deskId);
+    
+    if (isInAvailableList) {
+      return {
+        status: 'available',
+        statusText: 'Available',
+        statusClass: 'desk-status available'
+      };
+    } else {
+      return {
+        status: 'unavailable',
+        statusText: 'Booked/Unavailable',
+        statusClass: 'desk-status unavailable'
+      };
+    }
   }
 
   /**

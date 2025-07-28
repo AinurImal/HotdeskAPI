@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Desk, CreateDeskRequest, UpdateDeskRequest, DeskAvailabilityResponse } from './desk.model';
 import { environment } from '../../environments/environment';
@@ -41,7 +41,11 @@ export class DeskService {
   checkDeskAvailability(deskId: number, date: string): Observable<DeskAvailabilityResponse> {
     return this.http.get<DeskAvailabilityResponse>(`${this.apiUrl}/${deskId}/availability?date=${encodeURIComponent(date)}`)
       .pipe(
-        catchError(this.handleError)
+        catchError((error) => {
+          console.warn(`Desk availability check failed for desk ${deskId} on ${date}:`, error);
+          // Return available by default when API fails (respect system isAvailable status)
+          return of({ DeskId: deskId, IsAvailable: true, Message: 'API check failed, using system status' });
+        })
       );
   }
 
