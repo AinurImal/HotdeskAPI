@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { Desk, CreateDeskRequest, UpdateDeskRequest } from './desk.model';
+import { Desk, CreateDeskRequest, UpdateDeskRequest, DeskAvailabilityResponse } from './desk.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -38,8 +38,8 @@ export class DeskService {
   }
 
   // GET - Check desk availability for a specific date
-  checkDeskAvailability(deskId: number, date: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${deskId}/availability?date=${encodeURIComponent(date)}`)
+  checkDeskAvailability(deskId: number, date: string): Observable<DeskAvailabilityResponse> {
+    return this.http.get<DeskAvailabilityResponse>(`${this.apiUrl}/${deskId}/availability?date=${encodeURIComponent(date)}`)
       .pipe(
         catchError(this.handleError)
       );

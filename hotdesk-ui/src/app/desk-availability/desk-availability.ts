@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { DeskService } from '../desk/desk.service';
-import { Desk } from '../desk/desk.model';
+import { Desk, DeskAvailabilityResponse } from '../desk/desk.model';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 
@@ -90,21 +90,28 @@ export class DeskAvailabilityComponent implements OnInit {
         catchError(error => {
           console.error(`Error checking availability for desk ${desk.deskId}:`, error);
           // On error, assume desk is unavailable for safety
-          return of({ DeskId: desk.deskId, IsAvailable: false });
+          return of({ 
+            deskId: desk.deskId!, 
+            date: dateForApi, 
+            isAvailable: false, 
+            message: 'Error checking availability' 
+          } as DeskAvailabilityResponse);
         })
       );
     });
 
     forkJoin(availabilityChecks).subscribe({
       next: (availabilityResults) => {
-        console.log('Availability Results:', availabilityResults);
+        console.log('Availability Results from API:', availabilityResults);
         
         this.availableDesks = [];
         this.unavailableDesks = [];
 
         this.desks.forEach(desk => {
-          const availabilityResult = availabilityResults.find(result => result.DeskId === desk.deskId);
-          if (availabilityResult && availabilityResult.IsAvailable) {
+          const availabilityResult = availabilityResults.find(result => result.deskId === desk.deskId);
+          console.log(`Desk ${desk.name} (ID: ${desk.deskId}) availability:`, availabilityResult);
+          
+          if (availabilityResult && availabilityResult.isAvailable) {
             this.availableDesks.push({ ...desk, isAvailable: true });
           } else {
             this.unavailableDesks.push({ ...desk, isAvailable: false });
@@ -114,7 +121,10 @@ export class DeskAvailabilityComponent implements OnInit {
         console.log('Available Desks:', this.availableDesks);
         console.log('Unavailable Desks:', this.unavailableDesks);
 
-        this.successMessage = `Successfully loaded ${this.desks.length} desk(s) for ${this.formatDateForDisplay(this.selectedDate)}. ${this.availableDesks.length} available, ${this.unavailableDesks.length} unavailable.`;
+        // Show detailed success message with booking information
+        const bookedDesks = this.unavailableDesks.length;
+        const availableDesks = this.availableDesks.length;
+        this.successMessage = `Successfully checked availability for ${this.formatDateForDisplay(this.selectedDate)}. ${availableDesks} desk(s) available, ${bookedDesks} desk(s) already booked.`;
       },
       error: (error) => {
         console.error('Error checking desk availability:', error);

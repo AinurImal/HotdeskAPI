@@ -28,3 +28,11 @@ export interface UpdateDeskRequest {
   isAvailable: boolean; // Updated availability status of the desk
   description?: string; // Updated additional description or notes about the desk
 }
+
+// Interface for desk availability response from HotdeskAPI
+export interface DeskAvailabilityResponse {
+  deskId: number;       // Desk identifier
+  date: string;         // Date for which availability was checked (ISO format)
+  isAvailable: boolean; // True if desk is available, false if booked
+  message: string;      // Descriptive message about availability status
+}
