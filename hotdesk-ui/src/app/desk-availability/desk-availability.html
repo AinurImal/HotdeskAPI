@@ -22,10 +22,15 @@
     </ul>
   </nav>
   <main class="content-area">
-    <h1>Desk Availability</h1>
-    <p *ngIf="selectedDate" class="availability-date">
-      Showing availability for: <strong>{{ formatDateForDisplay(selectedDate) }}</strong>
-    </p>
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Desk Availability</h1>
+      <p class="page-subtitle">View and filter available desks in real-time</p>
+      <p *ngIf="selectedDate" class="availability-date">
+        <span class="date-label">Showing availability for:</span>
+        <span class="date-value">{{ formatDateForDisplay(selectedDate) }}</span>
+      </p>
+    </div>
 
     <!-- Loading indicator -->
     <div *ngIf="isLoading" class="loading">
@@ -88,74 +93,77 @@
       </div>
       
       <div class="filter-container">
-        <!-- Primary Date Filter - Featured -->
-        <div class="primary-filter-group">
-          <label for="selectedDate" class="primary-label">
-            <span class="label-icon">📅</span>
-            Select Date
-          </label>
-          <input 
-            type="date" 
-            id="selectedDate" 
-            [(ngModel)]="selectedDate"
-            (change)="onDateChange()"
-            class="form-control date-input"
-            [disabled]="isLoading">
-        </div>
-        
-        <!-- Secondary Filters Grid -->
-        <div class="secondary-filters">
-          <div class="filter-row">
-            <div class="filter-group">
-              <label for="searchTerm" class="secondary-label">
-                <span class="label-icon">🔍</span>
-                Search
-              </label>
-              <input 
-                type="text" 
-                id="searchTerm" 
-                [(ngModel)]="searchTerm"
-                placeholder="Desk name, location..."
-                class="form-control search-input"
-                [disabled]="isLoading">
-            </div>
-            
-            <div class="filter-group">
-              <label for="location" class="secondary-label">
-                <span class="label-icon">📍</span>
-                Location
-              </label>
-              <select id="location" [(ngModel)]="selectedLocation" class="form-control select-input" [disabled]="isLoading">
-                <option value="">All Locations ({{ locations.length }})</option>
-                <option *ngFor="let location of locations" [value]="location">{{ location }}</option>
-              </select>
-            </div>
+        <!-- Single Row Layout: Calendar | Search | Location | Monitor & Clear -->
+        <div class="filter-main-row">
+          <!-- Left: Calendar -->
+          <div class="filter-group calendar-group">
+            <label for="selectedDate" class="filter-label">
+              <span class="label-icon">📅</span>
+              Select Date
+            </label>
+            <input 
+              type="date" 
+              id="selectedDate" 
+              [(ngModel)]="selectedDate"
+              (change)="onDateChange()"
+              class="form-control date-input-compact"
+              [disabled]="isLoading">
           </div>
           
-          <div class="filter-options">
-            <div class="checkbox-container">
-              <label class="modern-checkbox">
+          <!-- Middle Left: Desk Name Search -->
+          <div class="filter-group search-group">
+            <label for="searchTerm" class="filter-label">
+              <span class="label-icon">🔍</span>
+              Desk Name
+            </label>
+            <input 
+              type="text" 
+              id="searchTerm" 
+              [(ngModel)]="searchTerm"
+              placeholder="Search desk name..."
+              class="form-control search-input-compact"
+              [disabled]="isLoading">
+          </div>
+          
+          <!-- Middle Right: Location -->
+          <div class="filter-group location-group">
+            <label for="location" class="filter-label">
+              <span class="label-icon">📍</span>
+              Location
+            </label>
+            <select id="location" [(ngModel)]="selectedLocation" class="form-control select-input-compact" [disabled]="isLoading">
+              <option value="">All Locations ({{ locations.length }})</option>
+              <option *ngFor="let location of locations" [value]="location">{{ location }}</option>
+            </select>
+          </div>
+          
+          <!-- Right: Monitor & Clear Controls -->
+          <div class="filter-group controls-group">
+            <label class="filter-label">
+              <span class="label-icon">⚙️</span>
+              Controls
+            </label>
+            <div class="controls-row">
+              <label class="compact-checkbox">
                 <input 
                   type="checkbox" 
                   [(ngModel)]="showMonitorOnly" 
                   [disabled]="isLoading"
                   class="checkbox-input">
                 <span class="checkbox-custom"></span>
-                <span class="checkbox-label">
+                <span class="checkbox-text">
                   <span class="checkbox-icon">🖥️</span>
-                  Monitor required
+                  Monitor
                 </span>
               </label>
-            </div>
-            
-            <div class="filter-actions">
+              
               <button 
-                class="btn btn-clear-filters" 
+                class="btn btn-clear-compact" 
                 (click)="resetFilters()" 
                 [disabled]="isLoading || !hasActiveFilters()"
                 [class.has-filters]="hasActiveFilters()">
                 <span class="btn-icon">✨</span>
-                <span class="btn-text">Clear Filters</span>
+                <span class="btn-text">Clear</span>
               </button>
             </div>
           </div>
@@ -163,11 +171,11 @@
       </div>
     </div>
 
-    <!-- Summary Stats with API Validation -->
+    <!-- Summary Stats with Dashboard-style Cards -->
     <div class="stats-section" *ngIf="isDataLoaded()">
       <div class="stat-card available">
         <div class="stat-icon">✅</div>
-        <div class="stat-info">
+        <div class="stat-content">
           <h3>{{ getFilteredDesks(availableDesks).length }}</h3>
           <p>Available Desks</p>
           <small *ngIf="hasActiveFilters()" class="filtered-count">
@@ -178,7 +186,7 @@
       
       <div class="stat-card unavailable">
         <div class="stat-icon">❌</div>
-        <div class="stat-info">
+        <div class="stat-content">
           <h3>{{ getFilteredDesks(unavailableDesks).length }}</h3>
           <p>Unavailable Desks</p>
           <small *ngIf="hasActiveFilters()" class="filtered-count">
@@ -189,7 +197,7 @@
       
       <div class="stat-card total">
         <div class="stat-icon">📊</div>
-        <div class="stat-info">
+        <div class="stat-content">
           <h3>{{ getFilteredDesks(desks).length }}</h3>
           <p>Total Desks</p>
           <small *ngIf="hasActiveFilters()" class="filtered-count">
@@ -200,7 +208,7 @@
       
       <div class="stat-card monitor">
         <div class="stat-icon">🖥️</div>
-        <div class="stat-info">
+        <div class="stat-content">
           <h3>{{ getFilteredDesks(getDesksWithMonitors()).length }}</h3>
           <p>With Monitors</p>
         </div>
