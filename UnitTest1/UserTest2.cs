@@ -111,5 +111,56 @@ namespace UnitTest1
             // Verify that the user was assigned a valid UserId
             Assert.NotEqual(Guid.Empty, createdUser.UserId);
         }
+
+        /// <summary>
+        /// Test email format validation in PostUser using the 3A pattern (Arrange, Act, Assert)
+        /// This test verifies that when an invalid email format is provided, the API returns BadRequest
+        /// This adds coverage for the EmailAddress validation in the User model and controller
+        /// </summary>
+        [Fact]
+        public async Task PostUser_WithInvalidEmailFormat_ReturnsBadRequest()
+        {
+            // ARRANGE - Set up the test environment, data, and dependencies
+            
+            // Create an in-memory database for testing to avoid affecting real database
+            var options = new DbContextOptionsBuilder<HotdeskAPIContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Unique DB name for test isolation
+                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning)) // Ignore transaction warnings for in-memory DB
+                .Options;
+
+            // Create test user with invalid email format (this should trigger validation failure)
+            var invalidUser = new User
+            {
+                FullName = "Jane Smith", // Valid - proper FullName
+                UserName = "janesmith",  // Valid - proper UserName
+                PhoneNumber = "0987654321", // Valid - proper phone number format
+                Email = "invalid-email-format" // Invalid - missing @ symbol and domain, should cause validation error
+            };
+
+            // Set up the database context with in-memory database
+            using var context = new HotdeskAPIContext(options);
+            
+            // Create the controller instance with the test database context
+            var controller = new UsersController(context);
+
+            // ACT - Execute the method being tested
+            var result = await controller.PostUser(invalidUser);
+
+            // ASSERT - Verify the results meet expectations
+            
+            // Verify that the result is of type BadRequestObjectResult
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+            
+            // Verify that the HTTP status code is 400 (Bad Request)
+            Assert.Equal(400, badRequestResult.StatusCode);
+            
+            // Verify that the error response is not null
+            var errorResponse = badRequestResult.Value;
+            Assert.NotNull(errorResponse);
+            
+            // Convert the error response to string and verify it contains the expected email validation message
+            var errorMessage = errorResponse.ToString();
+            Assert.Contains("Email is not valid", errorMessage);
+        }
     }
 }
